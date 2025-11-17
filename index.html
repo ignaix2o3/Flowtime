@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flowtime Timer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .circular-progress { background: radial-gradient(closest-side, #111827 89%, transparent 90% 100%), conic-gradient(var(--progress-color, #38bdf8) var(--progress, 0%), #374151 0); }
+        .hidden { display: none; }
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+        #history-sidebar { transition: transform 0.3s ease-in-out; }
+        .arrow-icon { transition: transform 0.2s ease-in-out; }
+        .title-item.dragging, .title-dropdown-item.dragging { opacity: 0.5; background: #374151; }
+        .drop-zone { border: 2px dashed #4b5563; }
+        .attendance-circle-container { opacity: 0.7; }
+        .attendance-circle-container.weekday { opacity: 1.0; }
+        #manual-entry-form { transition: all 0.3s ease-in-out; max-height: 0; overflow: hidden; }
+        #manual-entry-form.expanded { max-height: 300px; }
+        #tutorial-overlay { transition: opacity 0.3s ease-in-out; }
+        #tutorial-spotlight { position: absolute; border-radius: 8px; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7); transition: all 0.4s ease-in-out; pointer-events: none; }
+        #tutorial-modal { transition: all 0.4s ease-in-out; transform: translateY(10px); opacity: 0; }
+        #tutorial-modal.visible { transform: translateY(0); opacity: 1; }
+    </style>
+    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json">.    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json">
+</head>
+<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen antialiased overflow-hidden">
+    <div id="app-container" class="w-full h-full max-w-4xl max-h-[800px] p-4 md:p-8 relative">
+        <button id="tutorial-btn" class="absolute top-4 left-4 z-30 p-2 text-gray-400 hover:text-white transition-colors" title="Ver Tutorial (H)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        </button>
+        <button id="history-toggle-btn" class="absolute top-4 right-4 z-30 p-2 text-gray-400 hover:text-white transition-colors" title="Ver Historial">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+        
+        <div id="history-sidebar" class="fixed top-0 right-0 h-full w-80 bg-gray-800 shadow-2xl z-40 transform translate-x-full p-6 flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-sky-400">Historial de Sesiones</h2>
+                <button id="add-manual-entry-toggle-btn" class="p-1 text-gray-400 hover:text-white" title="Añadir Entrada Manual">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
+            </div>
+            
+            <div id="manual-entry-form" class="mb-4">
+                <div class="bg-gray-700/50 p-3 rounded-lg space-y-3 text-sm">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1">Tarea</label>
+                        <select id="manual-title-select" class="w-full bg-gray-600 border border-gray-500 rounded p-1.5"></select>
+                    </div>
+            
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1">Subtítulo <span class="text-gray-500">(Opcional)</span></label>
+                        <input type="text" id="manual-subtitle-input" class="w-full bg-gray-600 border border-gray-500 rounded p-1.5" placeholder="Ej: Certamen 2">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1">Fecha</label>
+                        <input type="date" id="manual-date-input" class="w-full bg-gray-600 border border-gray-500 rounded p-1.5">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-300 mb-1">Inicio</label>
+                            <input type="time" id="manual-start-time-input" class="w-full bg-gray-600 border border-gray-500 rounded p-1.5">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-300 mb-1">Fin</label>
+                            <input type="time" id="manual-end-time-input" class="w-full bg-gray-600 border border-gray-500 rounded p-1.5">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1">Tipo</label>
+                        <select id="manual-task-type-select" class="w-full bg-gray-600 border border-gray-500 rounded p-1.5">
+                            <option value="primary">Teoría</option>
+                            <option value="secondary">Práctica</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end gap-2 pt-2">
+                        <button id="cancel-manual-entry-btn" class="px-3 py-1 bg-gray-600 hover:bg-gray-500 rounded text-xs">Cancelar</button>
+                        <button id="save-manual-entry-btn" class="px-3 py-1 bg-sky-600 hover:bg-sky-500 rounded text-xs">Guardar</button>
+                    </div>
+                </div>
+            </div>
+            <div id="history-list" class="flex-grow overflow-y-auto pr-2" style="max-height: 70%;"></div>
+            <div class="mt-auto pt-4 border-t border-gray-700">
+                <button id="stats-btn" class="w-full text-white bg-sky-600 hover:bg-sky-700 font-medium rounded-lg text-lg px-5 py-3 text-center transition-colors duration-300 flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                    Ver Estadísticas
+                </button>
+            </div>
+        </div>
+        
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 hidden"></div>
+        
+        <div id="stats-overlay" class="fixed inset-0 bg-black/70 z-50 hidden items-center justify-center p-4">
+            <div id="stats-modal" class="bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl p-8 flex flex-col h-[90vh] max-h-[850px]">
+                <div class="grid grid-cols-2 gap-x-4 gap-y-2 mb-6">
+                    <div><span id="weekly-total-time" class="text-lg font-mono text-gray-400"></span></div>
+                    <div class="flex items-center gap-2 justify-end">
+                        <button id="prev-week-btn" class="p-2 rounded-md hover:bg-gray-700 transition-colors">&lt;</button>
+                        <span id="week-display" class="font-bold text-lg text-sky-400"></span>
+                        <button id="next-week-btn" class="p-2 rounded-md hover:bg-gray-700 transition-colors">&gt;</button>
+                    </div>
+                    <div class="col-span-2 flex items-center gap-4">
+                        <select id="stats-group-filter" class="bg-gray-700 border border-gray-600 rounded-lg p-2"></select>
+                        <select id="stats-title-filter" class="bg-gray-700 border border-gray-600 rounded-lg p-2"></select>
+                        <button id="stats-title-color-btn" class="hidden p-2 text-gray-400 hover:text-white" title="Cambiar Color del Título">
+                            <div id="stats-title-color-swatch" class="w-5 h-5 rounded-full border-2 border-gray-500"></div>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex-grow relative"><canvas id="stats-chart"></canvas></div>
+                <div id="attendance-tracker-container" class="mt-6 pt-4 border-t border-gray-700/50">
+                    <div class="grid grid-cols-[auto_1fr] items-center gap-4">
+                        <button id="attendance-lock-btn" class="p-2 text-gray-400 hover:text-white" title="Bloquear edición"></button>
+                        <div id="attendance-circles" class="grid grid-cols-7 gap-2 justify-items-center"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="config-screen" class="flex flex-col items-center justify-center h-full w-full">
+            <h1 class="text-4xl md:text-5xl font-bold text-sky-400 mb-8">Flowtime</h1>
+            
+            <div id="config-box" class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-sm">
+                <div class="mb-4">
+                    <label class="block mb-2 text-sm font-medium text-gray-300">Título de la Sesión</label>
+                    <div id="session-title-container" class="relative w-full">
+                        <button id="select-group-btn" class="absolute inset-y-0 left-0 flex items-center justify-center w-12" title="Seleccionar Grupo">
+                            <div id="selected-group-abbr" class="w-8 h-8 bg-gray-700 rounded-md flex items-center justify-center font-bold text-sky-400 hover:bg-gray-600 transition-colors">EST</div>
+                        </button>
+                        <input type="text" id="session-title-input" class="bg-gray-700 border border-gray-600 text-white text-lg rounded-lg focus:ring-sky-500 focus:border-sky-500 block w-full p-3 pl-12 pr-24 text-center" placeholder="Escribe o selecciona" autocomplete="off">
+                        <button id="title-color-btn" class="absolute inset-y-0 right-12 flex items-center justify-center w-12 text-gray-400 hover:text-white" title="Cambiar Color">
+                            <div id="title-color-swatch" class="w-5 h-5 rounded-full border-2 border-gray-500"></div>
+                        </button>
+                        <button id="select-title-btn" class="absolute inset-y-0 right-0 flex items-center justify-center w-12 text-gray-400 hover:text-white" title="Ver Títulos del Grupo">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div id="select-group-dropdown" class="hidden absolute z-20 mt-1 w-full bg-gray-700 rounded-md shadow-lg max-h-60 overflow-y-auto"></div>
+                        <div id="select-title-dropdown" class="hidden absolute z-20 mt-1 w-full bg-gray-700 rounded-md shadow-lg max-h-60 overflow-y-auto"></div>
+                    </div>
+                </div>
+            
+                <div class="mb-6">
+                    <label class="block mb-2 text-sm font-medium text-gray-300">Subtítulo <span class="text-gray-500">(Opcional, ej: "Certamen 2")</span></label>
+                    <input type="text" id="session-subtitle-input" class="bg-gray-700 border border-gray-600 text-white text-base rounded-lg focus:ring-sky-500 focus:border-sky-500 block w-full p-2.5 text-center" placeholder="Añade un apodo..." autocomplete="off">
+                </div>
+                <div id="time-inputs-container" class="mb-8">
+                    <div class="mb-6">
+                        <label class="block mb-2 text-sm font-medium text-gray-300">Tiempo de Trabajo</label>
+                        <div class="flex items-center gap-2">
+                            <div class="relative w-full"><input type="number" id="work-hours-input" class="bg-gray-700 border border-gray-600 text-white text-lg rounded-lg focus:ring-sky-500 focus:border-sky-500 block w-full py-3 text-center" placeholder="H" value="0"></div>
+                            <span class="text-gray-400">:</span>
+                            <div class="relative w-full"><input type="number" id="work-minutes-input" class="bg-gray-700 border border-gray-600 text-white text-lg rounded-lg focus:ring-sky-500 focus:border-sky-500 block w-full py-3 text-center" placeholder="M" value="25"></div>
+                            <span class="text-gray-400">:</span>
+                            <div class="relative w-full"><input type="number" id="work-seconds-input" class="bg-gray-700 border border-gray-600 text-white text-lg rounded-lg focus:ring-sky-500 focus:border-sky-500 block w-full p-3 text-center" placeholder="S" value="0"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-300">Presupuesto de Descanso</label>
+                        <div class="flex items-center gap-2">
+                            <div class="relative w-full"><input type="number" id="rest-hours-input" class="bg-gray-700 border border-gray-600 text-white text-lg rounded-lg focus:ring-sky-500 focus:border-sky-500 block w-full py-3 text-center" placeholder="H" value="0"></div>
+                            <span class="text-gray-400">:</span>
+                            <div class="relative w-full"><input type="number" id="rest-minutes-input" class="bg-gray-700 border border-gray-600 text-white text-lg rounded-lg focus:ring-sky-500 focus:border-sky-500 block w-full py-3 text-center" placeholder="M" value="5"></div>
+                            <span class="text-gray-400">:</span>
+                            <div class="relative w-full"><input type="number" id="rest-seconds-input" class="bg-gray-700 border border-gray-600 text-white text-lg rounded-lg focus:ring-sky-500 focus:border-sky-500 block w-full p-3 text-center" placeholder="S" value="0"></div>
+                        </div>
+                    </div>
+                </div>
+                <p id="estimated-finish-time" class="text-center text-gray-500 text-sm mb-4 h-5"></p>
+                <button id="start-btn" class="w-full text-white bg-sky-600 hover:bg-sky-700 focus:ring-4 focus:outline-none focus:ring-sky-800 font-medium rounded-lg text-lg px-5 py-3 text-center transition-colors duration-300">
+                    Iniciar Sesión
+                </button>
+            </div>
+            <p class="text-gray-500 mt-8 text-center text-sm">Define tu bloque de trabajo y tu presupuesto de descanso para empezar.</p>
+            <p class="text-gray-500 mt-4 text-center text-xs">Tip: Para los minutos, usa <kbd class="px-2 py-1.5 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-lg">Ctrl</kbd> + Rueda del mouse para ajustar de 1 en 1.</p>
+        </div>
+        
+        <div id="manage-groups-modal" class="hidden fixed z-30 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gray-800 border border-gray-700 p-6 rounded-2xl shadow-2xl w-[450px]">
+            <h3 class="text-lg font-bold text-sky-400 mb-4">Gestionar Grupos y Títulos (Avanzado)</h3>
+            <div id="groups-container" class="max-h-80 overflow-y-auto pr-2 space-y-4"></div>
+            <div class="mt-4 pt-4 border-t border-gray-700">
+                <input type="text" id="new-group-input" class="bg-gray-700 border border-gray-600 text-white text-base rounded-lg focus:ring-sky-500 focus:border-sky-500 block w-full p-2" placeholder="Nombre del Nuevo Grupo">
+            </div>
+        </div>
+        
+        <div id="confirm-delete-overlay" class="fixed inset-0 bg-black/70 z-50 hidden items-center justify-center p-4">
+            <div class="bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+                <h3 class="text-xl font-bold mb-4">¿Confirmar Eliminación?</h3>
+                <p id="confirm-delete-message" class="text-gray-400 mb-6"></p>
+                <div class="flex justify-center gap-4">
+                    <button id="cancel-delete-btn" class="px-8 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg">Cancelar</button>
+                    <button id="confirm-delete-btn" class="px-8 py-2 bg-red-600 hover:bg-red-500 rounded-lg">Eliminar</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="confirm-stop-overlay" class="fixed inset-0 bg-black/70 z-50 hidden items-center justify-center p-4">
+            <div class="bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+                <h3 class="text-xl font-bold mb-4">¿Detener la Sesión?</h3>
+                <p class="text-gray-400 mb-6">El progreso actual no se guardará en el historial. ¿Estás seguro de que quieres salir?</p>
+                <div class="flex justify-center gap-4">
+                    <button id="cancel-stop-btn" class="px-8 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg">Cancelar</button>
+                    <button id="confirm-stop-btn" class="px-8 py-2 bg-red-600 hover:bg-red-500 rounded-lg">Detener</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="session-screen" class="hidden h-full w-full grid grid-cols-4 grid-rows-[auto_1fr_auto] gap-4">
+            <div id="work-monitor" class="col-span-4 row-start-1 p-4 md:p-6 bg-gray-800 rounded-2xl flex items-center gap-4">
+                <div class="flex items-baseline gap-2 whitespace-nowrap">
+                    <h2 class="text-sm md:text-base font-semibold text-gray-400">TIEMPO DE TRABAJO:</h2>
+                    <span id="work-session-title" class="text-base font-bold text-sky-400"></span>
+                    <span id="work-time-goal" class="text-lg font-mono text-sky-400">00:00</span>
+                </div>
+                <div class="flex-grow bg-gray-700 rounded-full h-4">
+                    <div id="work-progress-bar" class="bg-sky-500 h-4 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <span id="work-progress-percentage" class="text-base font-mono text-gray-400 w-12 text-right">0%</span>
+            </div>
+            
+            <div id="rest-timer" class="col-start-1 md:col-start-2 col-span-4 md:col-span-2 row-start-2 p-6 flex flex-col items-center justify-center gap-6">
+                <div class="text-center"><span id="finish-time-display" class="text-lg font-medium text-gray-400"></span></div>
+                <div id="circular-progress-bar" class="circular-progress w-48 h-48 md:w-64 md:h-64 rounded-full flex items-center justify-center" style="--progress: 100%;">
+                    <span id="rest-time-display" class="text-5xl md:text-6xl font-bold font-mono">10:00</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button id="task-type-toggle-btn" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-full text-lg font-medium transition-colors duration-300 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"></path><polygon points="18 2 22 6 12 16 8 16 8 12 18 2"></polygon></svg>
+                        <span id="task-type-btn-text">Práctica</span>
+                    </button>
+                    <button id="rest-toggle-btn" class="px-8 py-3 bg-gray-700 hover:bg-gray-600 rounded-full text-lg font-medium transition-colors duration-300 flex items-center gap-2">
+                        <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                        <span id="rest-btn-text">Descansar</span>
+                    </button>
+                </div>
+                <div class="h-6 text-center">
+            <span class="text-sm text-gray-400">Modo actual: </span><span id="current-task-type-indicator" class="text-sm font-semibold text-white">Teoría</span>
+        </div>
+
+        <div class="h-10 mt-2"> <button id="manual-finish-btn" class="px-6 py-2 bg-sky-700/80 hover:bg-sky-600 rounded-full text-base font-medium transition-colors duration-300 flex items-center gap-2 opacity-50 cursor-not-allowed" disabled title="Se activará si entras en tiempo extra">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Finalizar Ahora
+            </button>
+        </div>
+                <div class="text-center"><span id="rest-used-display" class="text-base font-medium text-gray-400"></span></div>
+            </div>
+            
+            <div class="col-start-1 row-start-3 flex items-center justify-center">
+                <button id="reset-btn" class="px-6 py-3 bg-red-800/80 hover:bg-red-700 rounded-full text-base font-medium transition-colors duration-300 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
+                    Detener
+                 </button>
+            </div>
+        </div>
+        
+        <div id="tutorial-overlay" class="fixed inset-0 z-[100] hidden" style="background-color: transparent;">
+            <div id="tutorial-spotlight"></div>
+            <div id="tutorial-modal" class="absolute bg-gray-800 border border-gray-700 rounded-lg shadow-2xl p-6 w-full max-w-sm">
+                <h3 id="tutorial-title" class="text-lg font-bold text-sky-400 mb-3"></h3>
+                <p id="tutorial-content" class="text-gray-300 mb-5"></p>
+                <div class="flex justify-between items-center">
+                    <span id="tutorial-step-counter" class="text-sm text-gray-500"></span>
+                    <div class="flex gap-2">
+                        <button id="tutorial-prev-btn" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg">Anterior</button>
+                        <button id="tutorial-next-btn" class="px-4 py-2 bg-sky-600 hover:bg-sky-500 rounded-lg">Siguiente</button>
+                        <button id="tutorial-finish-btn" class="px-4 py-2 bg-sky-600 hover:bg-sky-500 rounded-lg hidden">Finalizar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="notepad-overlay" class="hidden fixed inset-0 bg-black/70 z-[101] flex items-center justify-center p-4">
+            <div class="bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg p-6 flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-sky-400">Bloc de Notas Rápido</h3>
+                    <span id="notepad-timer-display" class="font-mono text-lg text-gray-400"></span>
+                </div>
+                <textarea id="notepad-textarea" class="w-full h-64 bg-gray-900 text-white rounded-lg p-4 focus:outline-none focus:ring-2 focus:ring-sky-500 resize-none" placeholder="Anota tus ideas... Esto activa y consume tu tiempo de descanso."></textarea>
+                <button id="close-notepad-btn" class="mt-4 px-6 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg self-end">Cerrar</button>
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        const configScreen = document.getElementById('config-screen');
+        const sessionScreen = document.getElementById('session-screen');
+        const startBtn = document.getElementById('start-btn');
+        const sessionTitleInput = document.getElementById('session-title-input');
+        const sessionSubtitleInput = document.getElementById('session-subtitle-input'); // <-- NUEVO
+        const workHoursInput = document.getElementById('work-hours-input');
+        const workMinutesInput = document.getElementById('work-minutes-input');
+        const workSecondsInput = document.getElementById('work-seconds-input');
+        const restHoursInput = document.getElementById('rest-hours-input');
+        const restMinutesInput = document.getElementById('rest-minutes-input');
+        const restSecondsInput = document.getElementById('rest-seconds-input');
+        const workSessionTitleDisplay = document.getElementById('work-session-title');
+        const workTimeGoalDisplay = document.getElementById('work-time-goal');
+        const workProgressBar = document.getElementById('work-progress-bar');
+        const workProgressPercentage = document.getElementById('work-progress-percentage');
+        const restTimerDisplay = document.getElementById('rest-time-display');
+        const circularProgressBar = document.getElementById('circular-progress-bar');
+        const restToggleBtn = document.getElementById('rest-toggle-btn');
+        const restBtnText = document.getElementById('rest-btn-text');
+        const playIcon = document.getElementById('play-icon');
+        const pauseIcon = document.getElementById('pause-icon');
+        const resetBtn = document.getElementById('reset-btn');
+        const finishTimeDisplay = document.getElementById('finish-time-display');
+        const restUsedDisplay = document.getElementById('rest-used-display');
+        const historyToggleBtn = document.getElementById('history-toggle-btn');
+        const historySidebar = document.getElementById('history-sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        const historyList = document.getElementById('history-list');
+        const addManualEntryToggleBtn = document.getElementById('add-manual-entry-toggle-btn');
+        const manualEntryForm = document.getElementById('manual-entry-form');
+        const manualTitleSelect = document.getElementById('manual-title-select');
+        const manualSubtitleInput = document.getElementById('manual-subtitle-input'); // <-- NUEVO
+        const manualDateInput = document.getElementById('manual-date-input');
+        const manualStartTimeInput = document.getElementById('manual-start-time-input');
+        const manualEndTimeInput = document.getElementById('manual-end-time-input');
+        const manualTaskTypeSelect = document.getElementById('manual-task-type-select');
+        const saveManualEntryBtn = document.getElementById('save-manual-entry-btn');
+        const cancelManualEntryBtn = document.getElementById('cancel-manual-entry-btn');
+        const statsOverlay = document.getElementById('stats-overlay');
+        const statsBtn = document.getElementById('stats-btn');
+        const statsGroupFilter = document.getElementById('stats-group-filter');
+        const statsTitleFilter = document.getElementById('stats-title-filter');
+        const weekDisplay = document.getElementById('week-display');
+        const prevWeekBtn = document.getElementById('prev-week-btn');
+        const nextWeekBtn = document.getElementById('next-week-btn');
+        const statsChartCanvas = document.getElementById('stats-chart');
+        const weeklyTotalTime = document.getElementById('weekly-total-time');
+        let statsChart = null;
+        let currentDateForStats = new Date();
+        const selectGroupBtn = document.getElementById('select-group-btn');
+        const selectTitleBtn = document.getElementById('select-title-btn');
+        const manageGroupsModal = document.getElementById('manage-groups-modal');
+        const newGroupInput = document.getElementById('new-group-input');
+        const groupsContainer = document.getElementById('groups-container');
+        const selectGroupDropdown = document.getElementById('select-group-dropdown');
+        const selectTitleDropdown = document.getElementById('select-title-dropdown');
+        const confirmDeleteOverlay = document.getElementById('confirm-delete-overlay');
+        const confirmDeleteMessage = document.getElementById('confirm-delete-message');
+        const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+        const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+        const confirmStopOverlay = document.getElementById('confirm-stop-overlay');
+        const cancelStopBtn = document.getElementById('cancel-stop-btn');
+        const confirmStopBtn = document.getElementById('confirm-stop-btn');
+        const taskTypeToggleBtn = document.getElementById('task-type-toggle-btn');
+        const taskTypeBtnText = document.getElementById('task-type-btn-text');
+        const currentTaskTypeIndicator = document.getElementById('current-task-type-indicator');
+        const attendanceCirclesContainer = document.getElementById('attendance-circles');
+        const attendanceLockBtn = document.getElementById('attendance-lock-btn');
+        const manualFinishBtn = document.getElementById('manual-finish-btn');
+        
+        const tutorialBtn = document.getElementById('tutorial-btn');
+        const tutorialOverlay = document.getElementById('tutorial-overlay');
+        const tutorialSpotlight = document.getElementById('tutorial-spotlight');
+        const tutorialModal = document.getElementById('tutorial-modal');
+        const tutorialTitle = document.getElementById('tutorial-title');
+        const tutorialContent = document.getElementById('tutorial-content');
+        const tutorialStepCounter = document.getElementById('tutorial-step-counter');
+        const tutorialPrevBtn = document.getElementById('tutorial-prev-btn');
+        const tutorialNextBtn = document.getElementById('tutorial-next-btn');
+        const tutorialFinishBtn = document.getElementById('tutorial-finish-btn');
+        const notepadOverlay = document.getElementById('notepad-overlay');
+        const notepadTextarea = document.getElementById('notepad-textarea');
+        const notepadTimerDisplay = document.getElementById('notepad-timer-display');
+        const closeNotepadBtn = document.getElementById('close-notepad-btn');
+        
+        let timerWorker, mainInterval, sessionTitle = '', sessionGroup = '', sessionSubtitle = '', workTimeGoal = 0, workTimeElapsed = 0, restBudgetTotal = 0; // <-- NUEVO sessionSubtitle
+        let restBudgetRemaining = 0, isResting = false, isSessionFinished = false, isSessionPrimary = true, sessionHistory = [];
+        let isInExtraTime = false;
+        let titleGroups = [], deletePayload = null, currentSelectedGroup = 'ESTUDIOS', expandedGroupsInManager = [], sessionStartTime;
+        let attendanceData = {}, isAttendanceLocked = false;
+        let currentTutorialStep = 0;
+        let temporaryNotepadTimer = null;
+        let notepadContentBeforeOpening = '';
+        const defaultColor = { hex: '#38bdf8' };
+        
+        function createDiagonalPattern(color){let canvas=document.createElement("canvas");canvas.width=10;canvas.height=10;let context=canvas.getContext("2d");context.fillStyle=hexToRgba(color,0.4);context.fillRect(0,0,10,10);context.strokeStyle=hexToRgba(color,0.6);context.lineWidth=1.5;context.beginPath();context.moveTo(0,10);context.lineTo(10,0);context.stroke();return context.createPattern(canvas,'repeat')}
+        function createEmptyDiagonalPattern(color){let canvas=document.createElement("canvas");canvas.width=10;canvas.height=10;let context=canvas.getContext("2d");context.strokeStyle=hexToRgba(color,0.3);context.lineWidth=1.5;context.beginPath();context.moveTo(0,10);context.lineTo(10,0);context.stroke();return context.createPattern(canvas,'repeat')}
+        function hexToRgba(hex,alpha=1){let r=0,g=0,b=0;if(hex.length===4){r=parseInt(hex[1]+hex[1],16);g=parseInt(hex[2]+hex[2],16);b=parseInt(hex[3]+hex[3],16)}else if(hex.length===7){r=parseInt(hex.substring(1,3),16);g=parseInt(hex.substring(3,5),16);b=parseInt(hex.substring(5,7),16)}return`rgba(${r}, ${g}, ${b}, ${alpha})`}
+        function getGroupAbbreviation(groupName){if(groupName==='SIN GRUPO')return'NN';if(groupName==='TODOS')return'TODO';return groupName.substring(0,3).toUpperCase()}
+        let audioCtx;function playNotification(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();const oscillator=audioCtx.createOscillator();const gainNode=audioCtx.createGain();oscillator.connect(gainNode);gainNode.connect(audioCtx.destination);oscillator.type='sine';oscillator.frequency.setValueAtTime(440,audioCtx.currentTime);gainNode.gain.setValueAtTime(0.5,audioCtx.currentTime);gainNode.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+1);oscillator.start();oscillator.stop(audioCtx.currentTime+1)}
+        function playRestEndNotification(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();const oscillator=audioCtx.createOscillator();const gainNode=audioCtx.createGain();oscillator.connect(gainNode);gainNode.connect(audioCtx.destination);oscillator.type='triangle';oscillator.frequency.setValueAtTime(523.25,audioCtx.currentTime);gainNode.gain.setValueAtTime(0.3,audioCtx.currentTime);gainNode.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+0.5);oscillator.start();oscillator.stop(audioCtx.currentTime+0.5)}
+        function formatTime(seconds){const h=Math.floor(seconds/3600);const m=Math.floor((seconds%3600)/60);const s=Math.round(seconds%60);const formatted=(n)=>n.toString().padStart(2,'0');if(h>0)return`${formatted(h)}:${formatted(m)}:${formatted(s)}`;return`${formatted(m)}:${formatted(s)}`}
+        function formatHistoryTime(seconds){if(seconds<=0)return'0s';const h=Math.floor(seconds/3600);const m=Math.floor((seconds%3600)/60);const s=Math.round(seconds%60);let result='';if(h>0)result+=`${h}h `;if(m>0)result+=`${m}m `;if(s>0&&h===0)result+=`${s}s`;return result.trim()}
+        function formatMinutesToHHMM(minutes){if(isNaN(minutes)||minutes<0)return'00:00';const h=Math.floor(minutes/60);const m=Math.round(minutes%60);return`${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`}
+        function formatIntervalTime(isoStart,isoEnd){const start=new Date(isoStart);const end=new Date(isoEnd);const format={hour:'2-digit',minute:'2-digit'};return`${start.toLocaleTimeString('es-ES',format)} - ${end.toLocaleTimeString('es-ES',format)} h`}
+        function updateUI(){
+            const workProgressPercent=workTimeGoal>0?(workTimeElapsed/workTimeGoal)*100:0;
+            workProgressBar.style.width=`${workProgressPercent}%`;
+            workProgressPercentage.textContent=`${Math.floor(workProgressPercent)}%`;
+            const titleObj=findTitleObject(sessionTitle,sessionGroup);
+            const activeColor=titleObj?titleObj.color:defaultColor.hex;
+            workProgressBar.style.backgroundColor=activeColor;
+            document.documentElement.style.setProperty('--progress-color',activeColor);
+            
+            // 1. Actualizar los NÚMEROS siempre (esto mostrará el conteo regresivo)
+            if(restBudgetRemaining>=3600){
+                const h=Math.floor(restBudgetRemaining/3600);
+                const m=Math.floor((restBudgetRemaining%3600)/60);
+                restTimerDisplay.textContent=`${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}hrs`;
+                restTimerDisplay.classList.remove('text-5xl','md:text-6xl');
+                restTimerDisplay.classList.add('text-4xl','md:text-5xl');
+            } else {
+                restTimerDisplay.textContent=formatTime(restBudgetRemaining);
+                restTimerDisplay.classList.remove('text-4xl','md:text-5xl');
+                restTimerDisplay.classList.add('text-5xl','md:text-6xl');
+            }
+            
+            // 2. Actualizar el CÍRCULO condicionalmente
+            // Solo gasta el círculo si estamos descansando O si no estamos en tiempo extra.
+            if (isResting || !isInExtraTime) {
+                const restProgressPercent=restBudgetTotal>0?(restBudgetRemaining/restBudgetTotal)*100:0;
+                circularProgressBar.style.setProperty('--progress',`${restProgressPercent}%`);
+            }
+            // Si estamos en tiempo extra (isInExtraTime es true) Y no estamos descansando (isResting es false), el círculo no se actualiza, quedando "congelado".
+            
+            if(!isSessionFinished){
+                const restTimeUsed=restBudgetTotal-restBudgetRemaining;
+                restUsedDisplay.textContent=`Descanso usado: ${formatTime(restTimeUsed)}`;
+            }
+            if (!notepadOverlay.classList.contains('hidden') && restBudgetRemaining > 0 && !temporaryNotepadTimer) {
+                notepadTimerDisplay.textContent = formatTime(restBudgetRemaining);
+            }
+        }
+        function tick(){
+            if(isSessionFinished)return;
+            
+            if(isResting){
+                if(restBudgetRemaining>0){
+                    restBudgetRemaining--;
+                    if(restBudgetRemaining<=0){
+                        playRestEndNotification();
+                        isResting=false;
+                        restBtnText.textContent="Descansar";
+                        playIcon.classList.remove('hidden');
+                        pauseIcon.classList.add('hidden');
+                        
+                        // Si el presupuesto se acaba DURANTE el tiempo extra, la sesión termina.
+                        if (isInExtraTime) {
+                            finishSession();
+                        }
+                    }
+                }
+            } else {
+                // No estamos descansando, estamos trabajando
+                workTimeElapsed++;
+                
+                // --- LÓGICA DE TIEMPO EXTRA ---
+                if (isInExtraTime && restBudgetRemaining > 0) {
+                    // Estamos en tiempo extra, consumir presupuesto para "comprar" más tiempo de trabajo
+                    restBudgetRemaining--;
+                    workTimeGoal++; // Extender el objetivo
+                }
+                // --- FIN LÓGICA TIEMPO EXTRA ---
+            }
+
+            // --- LÓGICA DE FINALIZACIÓN (MODIFICADA) ---
+            if(workTimeElapsed >= workTimeGoal) {
+                if (!isInExtraTime && restBudgetRemaining > 0) {
+                    // Objetivo de trabajo original alcanzado Y HAY presupuesto
+                    // ==> Iniciar Modo "Tiempo Extra"
+                    isInExtraTime = true;
+                    playNotification(); // Notificar que se alcanzó el objetivo original
+                    
+                    // Activar el botón de finalizar manualmente
+                    manualFinishBtn.disabled = false;
+                    manualFinishBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    manualFinishBtn.title = 'Finalizar la sesión y guardar';
+                    
+                    // Actualizar UI para mostrar que estamos en tiempo extra
+                    finishTimeDisplay.textContent = "¡Tiempo Extra! (Usando presupuesto)";
+                    
+                } else if (isInExtraTime && restBudgetRemaining <= 0) {
+                    // Estamos en tiempo extra pero el presupuesto se agotó (ya sea trabajando o descansando)
+                    // ==> Finalizar Sesión
+                    finishSession();
+                    
+                } else if (restBudgetRemaining <= 0) {
+                    // Objetivo de trabajo alcanzado y NO hay presupuesto (o se agotó)
+                    // ==> Finalizar Sesión
+                    finishSession();
+                }
+                // Si isInExtraTime y restBudgetRemaining > 0, no hacer nada (la sesión continúa)
+            }
+            // --- FIN LÓGICA DE FINALIZACIÓN ---
+            
+            updateUI();
+        }
+        function updateTaskTypeUI(){const primaryText='Teoría';const secondaryText='Práctica';if(isSessionPrimary){taskTypeBtnText.textContent=secondaryText;taskTypeToggleBtn.title=`Cambiar a tiempo de ${secondaryText}`;currentTaskTypeIndicator.textContent=primaryText}else{taskTypeBtnText.textContent=primaryText;taskTypeToggleBtn.title=`Cambiar a tiempo de ${primaryText}`;currentTaskTypeIndicator.textContent=secondaryText}}
+        function toggleTaskType(){isSessionPrimary=!isSessionPrimary;updateTaskTypeUI()}
+        function toggleRest(){if(isSessionFinished||(!isResting&&restBudgetRemaining<=0))return;isResting=!isResting;restBtnText.textContent=isResting?"Pausar":"Descansar";playIcon.classList.toggle('hidden',isResting);pauseIcon.classList.toggle('hidden',!isResting);updateUI()}
+        function finishSession(){
+            if(timerWorker)timerWorker.postMessage('stop');
+            if(mainInterval)clearInterval(mainInterval);
+            isSessionFinished=true;
+            isResting=false;
+            isInExtraTime = false; // <-- AÑADIDO
+            playNotification();
+            if(workTimeElapsed>workTimeGoal){workTimeElapsed=workTimeGoal}
+            saveSessionToHistory();
+            updateUI();
+            const restTimeUsed=restBudgetTotal-restBudgetRemaining;
+            const completionMessage=sessionTitle?`¡Sesión de ${sessionTitle.toUpperCase()} Completada!`:'¡Sesión Completada!';
+            finishTimeDisplay.textContent=completionMessage;
+            restUsedDisplay.textContent=`Descanso total usado: ${formatTime(restTimeUsed)}`;
+            restToggleBtn.disabled=true;
+            restToggleBtn.classList.add('opacity-50','cursor-not-allowed');
+            taskTypeToggleBtn.disabled=true;
+            taskTypeToggleBtn.classList.add('opacity-50','cursor-not-allowed');
+            
+            // Desactivar y resetear el botón de finalizar
+            manualFinishBtn.disabled = true; // <-- AÑADIDO
+            manualFinishBtn.classList.add('opacity-50', 'cursor-not-allowed'); // <-- AÑADIDO
+            manualFinishBtn.title = 'Se activará si entras en tiempo extra'; // <-- AÑADIDO
+        }
+        function startSession(){
+            const enteredTitle=sessionTitleInput.value.trim().toUpperCase();
+            if(!enteredTitle){alert("Por favor, escribe o selecciona un título para la sesión.");return}
+            const group=titleGroups.find(g=>g.name===currentSelectedGroup);
+            if(group&&!group.titles.some(t=>t.name.toUpperCase()===enteredTitle)){addNewTitleToGroup(currentSelectedGroup,enteredTitle,false)}
+            sessionTitle=enteredTitle;
+            sessionGroup=currentSelectedGroup;
+            sessionSubtitle = sessionSubtitleInput.value.trim(); 
+            const workHours=parseInt(workHoursInput.value)||0;
+            const workMinutes=parseInt(workMinutesInput.value)||0;
+            const workSeconds=parseInt(workSecondsInput.value)||0;
+            const totalWorkSeconds=(workHours*3600)+(workMinutes*60)+workSeconds;
+            const restHours=parseInt(restHoursInput.value)||0;
+            const restMinutes=parseInt(restMinutesInput.value)||0;
+            const restSeconds=parseInt(restSecondsInput.value)||0;
+            const totalRestSeconds=(restHours*3600)+(restMinutes*60)+restSeconds;
+            if(totalWorkSeconds<=0){alert("Por favor, ingresa un tiempo de trabajo válido.");return}
+            if(totalRestSeconds<0){alert("Por favor, ingresa un presupuesto de descanso válido.");return}
+            
+            isSessionPrimary = true;
+            isInExtraTime = false; // <-- AÑADIDO
+            sessionStartTime=new Date();
+            workTimeGoal=totalWorkSeconds;
+            workTimeElapsed=0;
+            restBudgetTotal=totalRestSeconds;
+            restBudgetRemaining=totalRestSeconds;
+            isResting=false;
+            isSessionFinished=false;
+            configScreen.classList.add('hidden');
+            sessionScreen.classList.remove('hidden');
+            sessionScreen.classList.add('grid');
+            updateTaskTypeUI();
+            taskTypeToggleBtn.disabled=false;
+            taskTypeToggleBtn.classList.remove('opacity-50','cursor-not-allowed');
+            const groupPrefix=`(${sessionGroup.substring(0,3).toUpperCase()})`;
+            
+            let titleDisplay = `${groupPrefix} ${sessionTitle.toUpperCase()}`;
+            if (sessionSubtitle) {
+                titleDisplay += ` <span class="text-gray-400 font-medium ml-2">(${sessionSubtitle})</span>`;
+            }
+            workSessionTitleDisplay.innerHTML = titleDisplay; 
+            workTimeGoalDisplay.textContent=formatTime(workTimeGoal);
+            const now=new Date();
+            const finishTimestamp=now.getTime()+(workTimeGoal+restBudgetTotal)*1000;
+            const finishDate=new Date(finishTimestamp);
+            finishTimeDisplay.textContent=`Termina max. a las ${finishDate.getHours().toString().padStart(2,'0')}:${finishDate.getMinutes().toString().padStart(2,'0')}hrs`;
+            restBtnText.textContent="Descansar";
+            playIcon.classList.remove('hidden');
+            pauseIcon.classList.add('hidden');
+            restToggleBtn.disabled=false;
+            restToggleBtn.classList.remove('opacity-50','cursor-not-allowed');
+            
+            // Reiniciar estado del botón de finalizar
+            manualFinishBtn.disabled = true; // <-- AÑADIDO
+            manualFinishBtn.classList.add('opacity-50', 'cursor-not-allowed'); // <-- AÑADIDO
+            manualFinishBtn.title = 'Se activará si entras en tiempo extra'; // <-- AÑADIDO
+
+            updateUI();
+            try{
+                if(timerWorker)timerWorker.terminate();
+                const workerCode=`
+                    let interval;
+                    self.onmessage = function(e) {
+                        if (e.data === 'start') {
+                            interval = setInterval(() => { self.postMessage('tick'); }, 1000);
+                        } else if (e.data === 'stop') {
+                            clearInterval(interval);
+                        }
+                    };
+                `;
+                const blob=new Blob([workerCode],{type:'application/javascript'});
+                const workerUrl=URL.createObjectURL(blob);
+                timerWorker=new Worker(workerUrl);
+                timerWorker.onmessage=(e)=>{if(e.data==='tick')tick()};
+                timerWorker.postMessage('start')
+            }catch(e){
+                console.error("Worker failed to start. Falling back to setInterval.",e);
+                if(mainInterval)clearInterval(mainInterval);
+                mainInterval=setInterval(tick,1000)
+            }
+        }
+        function resetSession(){
+            if(timerWorker)timerWorker.postMessage('stop');
+            if(mainInterval)clearInterval(mainInterval);
+            sessionScreen.classList.add('hidden');
+            sessionScreen.classList.remove('grid');
+            configScreen.classList.remove('hidden');
+            toggleHistorySidebar(false);
+            toggleStatsModal(false);
+            sessionSubtitleInput.value = ''; 
+            isInExtraTime = false; // <-- AÑADIDO
+            
+            // Reiniciar estado del botón de finalizar
+            manualFinishBtn.disabled = true; // <-- AÑADIDO
+            manualFinishBtn.classList.add('opacity-50', 'cursor-not-allowed'); // <-- AÑADIDO
+            manualFinishBtn.title = 'Se activará si entras en tiempo extra'; // <-- AÑADIDO
+        }
+        function promptStopSession(){confirmStopOverlay.classList.remove('hidden');confirmStopOverlay.classList.add('flex')}
+        function closeStopSession(){confirmStopOverlay.classList.add('hidden');confirmStopOverlay.classList.remove('flex')}
+        
+        function saveData(){
+            const dataToSave={sessionHistory:sessionHistory,titleGroups:titleGroups,attendanceData:attendanceData,isAttendanceLocked:isAttendanceLocked};
+            localStorage.setItem('flowtimeData', JSON.stringify(dataToSave));
+        }
+        
+        async function loadData(){
+            const fileContent = localStorage.getItem('flowtimeData');
+            const data = fileContent ? JSON.parse(fileContent) : null;
+            if(data){
+            sessionHistory=(data.sessionHistory||[]).map(s=>({...s,workTimePrimary:s.workTimePrimary!==undefined?s.workTimePrimary:(s.workTime||0),workTimeSecondary:s.workTimeSecondary!==undefined?s.workTimeSecondary:0, subtitle: s.subtitle || ''}));
+            titleGroups=(data.titleGroups||[]).map(group=>({...group,titles:group.titles.map(title=>typeof title==='string'?{name:title,color:defaultColor.hex}:title)}));attendanceData=data.attendanceData||{};isAttendanceLocked=data.isAttendanceLocked||false}if(!titleGroups.some(g=>g.name==='ESTUDIOS')){titleGroups.unshift({name:'ESTUDIOS',titles:[]})}if(!titleGroups.some(g=>g.name==='SIN GRUPO')){titleGroups.push({name:'SIN GRUPO',titles:[]})}}
+        function toggleHistorySidebar(show){const shouldShow=show===true||(show!==false&&historySidebar.classList.contains('translate-x-full'));if(shouldShow){historySidebar.classList.remove('translate-x-full');sidebarOverlay.classList.remove('hidden');populateManualTitleSelect();manualEntryForm.classList.remove('expanded');addManualEntryToggleBtn.classList.remove('rotate-45','text-sky-400')}else{historySidebar.classList.add('translate-x-full');sidebarOverlay.classList.add('hidden')}}
+        function renderHistory(){historyList.innerHTML='';const groupedByDate={};const today=(new Date()).toLocaleDateString('sv-SE');const yesterday=(new Date(Date.now()-86400000)).toLocaleDateString('sv-SE');sessionHistory.forEach((session,index)=>{const sessionDateStr=(new Date(session.endTime)).toLocaleDateString('sv-SE');if(!groupedByDate[sessionDateStr])groupedByDate[sessionDateStr]=[];groupedByDate[sessionDateStr].push({...session,originalIndex:index})});if(Object.keys(groupedByDate).length===0){historyList.innerHTML=`<p class="text-gray-500 text-center mt-4">No hay sesiones guardadas.</p>`;return}Object.keys(groupedByDate).sort().reverse().forEach(dateStr=>{const dateGroupContainer=document.createElement('div');dateGroupContainer.className='mb-4';let dateLabel=(new Date(dateStr)).toLocaleDateString('es-ES',{day:'2-digit',month:'long'});if(dateStr===today)dateLabel='Hoy';if(dateStr===yesterday)dateLabel='Ayer';const dateHeader=document.createElement('button');dateHeader.className='flex items-center justify-between w-full text-left text-sky-400 font-semibold mb-2';dateHeader.innerHTML=`<span>${dateLabel}</span><svg class="arrow-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>`;const dateContent=document.createElement('div');const groupedByTask={};groupedByDate[dateStr].forEach(session=>{const taskKey=`${session.group}|||${session.title}`;if(!groupedByTask[taskKey]){groupedByTask[taskKey]={totalPrimary:0,totalSecondary:0,sessions:[],title:session.title,group:session.group}}groupedByTask[taskKey].totalPrimary+=session.workTimePrimary||0;groupedByTask[taskKey].totalSecondary+=session.workTimeSecondary||0;groupedByTask[taskKey].sessions.push(session)});for(const taskKey in groupedByTask){const task=groupedByTask[taskKey];const totalTime=task.totalPrimary+task.totalSecondary;const taskContainer=document.createElement('div');taskContainer.className='pl-2 border-l-2 border-gray-700 mb-2';const taskHeader=document.createElement('button');taskHeader.className='flex items-center justify-between w-full text-left bg-gray-700 p-3 rounded-lg';taskHeader.innerHTML=`
+                        <div class="flex flex-col">
+                           <span class="text-white font-semibold">${formatHistoryTime(totalTime)} - ${task.title.toUpperCase()}</span>
+                           <span class="text-xs text-gray-400">(${getGroupAbbreviation(task.group)})</span>
+                        </div>
+                        <svg class="arrow-icon w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    `;const taskDetails=document.createElement('div');taskDetails.className='hidden pl-4 pt-2 text-sm text-gray-400 space-y-1';task.sessions.sort((a,b)=>new Date(a.startTime)-new Date(b.startTime)).forEach(session=>{const detailEl=document.createElement('div');detailEl.className="flex items-center justify-between group";const sessionType=(session.workTimePrimary||0)>0?'Teoría':'Práctica';
+                        
+                        // --- MODIFICADO (para mostrar subtítulo) ---
+                        const subtitleHTML = session.subtitle ? `<span class="block text-gray-500 text-xs">- ${session.subtitle}</span>` : '';
+                        detailEl.innerHTML = `
+                            <div class="flex-grow">
+                                <span>${formatIntervalTime(session.startTime, session.endTime)} <span class="text-gray-500">(${sessionType})</span></span>
+                                ${subtitleHTML}
+                            </div>
+                            <button class="text-gray-500 hover:text-red-500 transition-opacity opacity-0 group-hover:opacity-100 p-1" title="Eliminar sesión">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </button>
+                        `;
+                        // --- FIN MODIFICADO ---
+
+                        detailEl.querySelector('button').onclick=(e)=>{e.stopPropagation();promptDelete({type:'session',index:session.originalIndex,time:formatIntervalTime(session.startTime,session.endTime)})};taskDetails.appendChild(detailEl)});taskHeader.onclick=()=>{taskDetails.classList.toggle('hidden');taskHeader.querySelector('.arrow-icon').classList.toggle('rotate-180')};taskContainer.appendChild(taskHeader);taskContainer.appendChild(taskDetails);dateContent.appendChild(taskContainer)}dateHeader.onclick=()=>{dateContent.classList.toggle('hidden');dateHeader.querySelector('.arrow-icon').classList.toggle('rotate-180')};dateGroupContainer.appendChild(dateHeader);dateGroupContainer.appendChild(dateContent);historyList.appendChild(dateGroupContainer)})}
+        function saveSessionToHistory(){const sessionEndTime=new Date();
+            // --- MODIFICADO (para guardar subtítulo) ---
+            const sessionData={
+                title:sessionTitle,
+                group:sessionGroup,
+                subtitle: sessionSubtitle, // <-- NUEVO
+                workTimePrimary:isSessionPrimary?workTimeElapsed:0,
+                workTimeSecondary:!isSessionPrimary?workTimeElapsed:0,
+                startTime:sessionStartTime.toISOString(),
+                endTime:sessionEndTime.toISOString()
+            };
+            // --- FIN MODIFICADO ---
+            sessionHistory.unshift(sessionData);saveData();renderHistory()}
+        function toggleManualEntryForm(){manualEntryForm.classList.toggle('expanded');addManualEntryToggleBtn.classList.toggle('rotate-45');addManualEntryToggleBtn.classList.toggle('text-sky-400');if(manualEntryForm.classList.contains('expanded')){manualDateInput.value=(new Date()).toLocaleDateString('sv-SE');
+            manualSubtitleInput.value = ''; // <-- NUEVO
+        }}
+        function populateManualTitleSelect(){manualTitleSelect.innerHTML='';titleGroups.forEach(group=>{if(group.titles.length>0){const optgroup=document.createElement('optgroup');optgroup.label=group.name;group.titles.forEach(title=>{const option=document.createElement('option');option.value=`${group.name}|||${title.name}`;option.textContent=title.name;optgroup.appendChild(option)});manualTitleSelect.appendChild(optgroup)}})}
+        function addManualSessionToHistory(){const selectedTitleData=manualTitleSelect.value;
+            const subtitle = manualSubtitleInput.value.trim(); // <-- NUEVO
+            const date=manualDateInput.value;const startTime=manualStartTimeInput.value;const endTime=manualEndTimeInput.value;const taskType=manualTaskTypeSelect.value;if(!selectedTitleData||!date||!startTime||!endTime){alert("Por favor, completa todos los campos.");return}const[group,title]=selectedTitleData.split('|||');const startDateTime=new Date(`${date}T${startTime}`);const endDateTime=new Date(`${date}T${endTime}`);if(startDateTime>=endDateTime){alert("La hora de fin debe ser posterior a la hora de inicio.");return}const durationInSeconds=(endDateTime-startDateTime)/1000;
+            
+            // --- MODIFICADO (para guardar subtítulo) ---
+            const sessionData={
+                title:title,
+                group:group,
+                subtitle: subtitle, // <-- NUEVO
+                workTimePrimary:taskType==='primary'?durationInSeconds:0,
+                workTimeSecondary:taskType==='secondary'?durationInSeconds:0,
+                startTime:startDateTime.toISOString(),
+                endTime:endDateTime.toISOString()
+            };
+            // --- FIN MODIFICADO ---
+            sessionHistory.push(sessionData);sessionHistory.sort((a,b)=>new Date(b.endTime)-new Date(a.endTime));saveData();renderHistory();if(!statsOverlay.classList.contains('hidden')){renderStatsChart()}toggleManualEntryForm()}
+        
+        function openNotepad() {
+            if (notepadOverlay.classList.contains('hidden') && !sessionScreen.classList.contains('hidden')) { 
+                notepadContentBeforeOpening = localStorage.getItem('flowtimeNotepadContent') || '';
+                notepadTextarea.value = notepadContentBeforeOpening;
+                notepadOverlay.classList.remove('hidden');
+                notepadTextarea.focus();
+                
+                if (temporaryNotepadTimer) clearInterval(temporaryNotepadTimer); 
+                if (restBudgetRemaining > 0) {
+                    if (!isResting) {
+                        toggleRest(); 
+                    }
+                    notepadTimerDisplay.textContent = formatTime(restBudgetRemaining);
+                } else {
+                    let countdown = 15;
+                    notepadTimerDisplay.textContent = `${countdown}s`;
+                    temporaryNotepadTimer = setInterval(() => {
+                        countdown--;
+                        if (countdown >= 0) {
+                            notepadTimerDisplay.textContent = `${countdown}s`;
+                        } else {
+                            closeNotepad(); 
+                        }
+                    }, 1000);
+                }
+            }
+        }
+        function closeNotepad() {
+            if (temporaryNotepadTimer) {
+                clearInterval(temporaryNotepadTimer);
+                temporaryNotepadTimer = null;
+            }
+            const currentContent = notepadTextarea.value;
+            if (currentContent !== notepadContentBeforeOpening) {
+                localStorage.setItem('flowtimeNotepadContent', currentContent);
+            }
+            notepadOverlay.classList.add('hidden');
+            
+            if (isResting) {
+                toggleRest(); 
+            }
+        }
+        function toggleNotepad() {
+            if (sessionScreen.classList.contains('hidden')) return; 
+            if (notepadOverlay.classList.contains('hidden')) {
+                openNotepad();
+            } else {
+                closeNotepad();
+            }
+        }
+        
+        function closePopovers(except=null){const popovers=[{id:'select-group-dropdown',element:selectGroupDropdown},{id:'select-title-dropdown',element:selectTitleDropdown},{id:'color-palette-popover',element:document.getElementById('color-palette-popover')}];popovers.forEach(popover=>{if(popover.element&&popover.id!==except){if(popover.id==='color-palette-popover'){popover.element.remove()}else{popover.element.classList.add('hidden')}}})}
+        function toggleManageGroupsModal(show){if(show){expandedGroupsInManager=[currentSelectedGroup];renderGroupManager();manageGroupsModal.classList.remove('hidden')}else{manageGroupsModal.classList.add('hidden')}}
+        function toggleSelectGroupDropdown(show){closePopovers('select-group-dropdown');if(show){renderSelectGroupDropdown();selectGroupDropdown.classList.toggle('hidden')}else{selectGroupDropdown.classList.add('hidden')}}
+        function toggleSelectTitleDropdown(show){closePopovers('select-title-dropdown');if(show){renderSelectTitleDropdown();selectTitleDropdown.classList.toggle('hidden')}else{selectTitleDropdown.classList.add('hidden')}}
+        function renderGroupManager(){groupsContainer.innerHTML='';const sinGrupo=titleGroups.find(g=>g.name==='SIN GRUPO');const otherGroups=titleGroups.filter(g=>g.name!=='SIN GRUPO').sort((a,b)=>a.name.localeCompare(b.name));const sortedGroups=[...otherGroups];if(sinGrupo){sortedGroups.push(sinGrupo)}sortedGroups.forEach(group=>{const isSelected=group.name===currentSelectedGroup;const isExpanded=expandedGroupsInManager.includes(group.name);const groupEl=document.createElement('div');groupEl.className=`bg-gray-700 p-3 rounded-lg group-drop-zone transition-all border-2 ${isSelected?'border-sky-500':'border-transparent'}`;groupEl.dataset.groupName=group.name;const header=document.createElement('div');header.className='flex items-center justify-between mb-2 cursor-pointer';header.onclick=(e)=>{e.stopPropagation();currentSelectedGroup=group.name;if(expandedGroupsInManager.includes(group.name)){expandedGroupsInManager=expandedGroupsInManager.filter(g=>g!==group.name)}else{expandedGroupsInManager.push(group.name)}updateSelectedGroupDisplay();renderGroupManager()};header.innerHTML=`<h4 class="font-bold text-white">${group.name}</h4>`;const controlsContainer=document.createElement('div');controlsContainer.className='flex items-center gap-2';if(group.name!=='SIN GRUPO'&&group.name!=='ESTUDIOS'){const deleteGroupBtn=document.createElement('button');deleteGroupBtn.className='text-gray-500 hover:text-red-500';deleteGroupBtn.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41z"/></svg>`;deleteGroupBtn.onclick=(e)=>{e.stopPropagation();promptDelete({type:'group',groupName:group.name})};controlsContainer.appendChild(deleteGroupBtn)}const arrowIcon=document.createElement('svg');arrowIcon.className='w-5 h-5 transition-transform';if(isExpanded)arrowIcon.classList.add('rotate-180');arrowIcon.innerHTML=`<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" stroke="currentColor"></path>`;controlsContainer.appendChild(arrowIcon);header.appendChild(controlsContainer);const contentContainer=document.createElement('div');contentContainer.className=`transition-all duration-300 overflow-hidden ${isExpanded?'max-h-96 mt-2':'max-h-0'}`;const titleList=document.createElement('div');titleList.className='space-y-2';group.titles.forEach(titleObj=>{const titleItem=document.createElement('div');titleItem.className='title-item flex items-center justify-between bg-gray-600 p-2 rounded';titleItem.draggable=true;titleItem.dataset.titleName=titleObj.name;titleItem.dataset.sourceGroup=group.name;const colorSwatch=document.createElement('div');colorSwatch.className='w-5 h-5 rounded-full cursor-pointer border-2 border-gray-500';colorSwatch.style.backgroundColor=titleObj.color;colorSwatch.onclick=(e)=>{e.stopPropagation();showColorPalette(e.target,group.name,titleObj.name,renderGroupManager)};const titleText=document.createElement('span');titleText.textContent=titleObj.name;titleText.className='flex-grow px-2 cursor-grab';const deleteBtn=document.createElement('button');deleteBtn.className='text-gray-400 hover:text-red-500 ml-2';deleteBtn.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M7 11v2h10v-2H7zm5-9C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8s8 3.59 8 8s-3.59 8-8 8z"/></svg>`;deleteBtn.onclick=(e)=>{e.stopPropagation();promptDelete({type:'title',groupName:group.name,titleName:titleObj.name})};titleItem.appendChild(colorSwatch);titleItem.appendChild(titleText);titleItem.appendChild(deleteBtn);titleList.appendChild(titleItem)});const newTitleInputContainer=document.createElement('div');newTitleInputContainer.className='mt-2';const newTitleInputEl=document.createElement('input');newTitleInputEl.type='text';newTitleInputEl.placeholder='Añadir título y presionar Enter';newTitleInputEl.className='bg-gray-600 border border-gray-500 text-white text-sm rounded-lg focus:ring-sky-500 focus:border-sky-500 block w-full p-1.5 new-title-in-group';newTitleInputEl.dataset.groupName=group.name;newTitleInputEl.onclick=(e)=>e.stopPropagation();newTitleInputContainer.appendChild(newTitleInputEl);contentContainer.appendChild(titleList);contentContainer.appendChild(newTitleInputContainer);groupEl.appendChild(header);groupEl.appendChild(contentContainer);groupsContainer.appendChild(groupEl)});setupDragAndDrop()}
+        function showColorPalette(anchorElement,groupName,titleName,onColorChangeCallback=null){const existingPalette=document.getElementById('color-palette-popover');const anchorId=anchorElement.id||`anchor-${Date.now()}`;anchorElement.id=anchorId;if(existingPalette&&existingPalette.dataset.anchorId===anchorId){existingPalette.remove();return}closePopovers();const palette=document.createElement('div');palette.id='color-palette-popover';palette.dataset.anchorId=anchorId;palette.className='absolute z-50 bg-gray-900 border border-gray-700 rounded-lg p-2';const canvas=document.createElement('canvas');const size=150;canvas.width=size;canvas.height=size;palette.appendChild(canvas);const ctx=canvas.getContext('2d');const centerX=size/2;const centerY=size/2;const radius=size/2;const gradient=ctx.createConicGradient(0,centerX,centerY);for(let i=0;i<=360;i++){gradient.addColorStop(i/360,`hsl(${i}, 100%, 50%)`)}ctx.beginPath();ctx.arc(centerX,centerY,radius,0,2*Math.PI);ctx.fillStyle=gradient;ctx.fill();canvas.onclick=(e)=>{const x=e.offsetX;const y=e.offsetY;const pixel=ctx.getImageData(x,y,1,1).data;const hex=`#${("000000"+((pixel[0]<<16)|(pixel[1]<<8)|pixel[2]).toString(16)).slice(-6)}`;const group=titleGroups.find(g=>g.name===groupName);if(group){const title=group.titles.find(t=>t.name===titleName);if(title){title.color=hex;saveData();if(onColorChangeCallback){onColorChangeCallback()}}}};document.body.appendChild(palette);const rect=anchorElement.getBoundingClientRect();palette.style.left=`${rect.left}px`;palette.style.top=`${rect.bottom+5}px`;setTimeout(()=>{const clickOutside=(e)=>{if(!palette.contains(e.target)&&e.target!==anchorElement&&!anchorElement.contains(e.target)){palette.remove();document.removeEventListener('click',clickOutside,true)}};document.addEventListener('click',clickOutside,true)},0)}
+        function renderSelectGroupDropdown(){selectGroupDropdown.innerHTML='';const sinGrupo=titleGroups.find(g=>g.name==='SIN GRUPO');const otherGroups=titleGroups.filter(g=>g.name!=='SIN GRUPO').sort((a,b)=>a.name.localeCompare(b.name));const sortedGroups=[...otherGroups];if(sinGrupo){sortedGroups.push(sinGrupo)}sortedGroups.forEach(group=>{const item=document.createElement('div');item.className='px-4 py-2 cursor-pointer hover:bg-gray-600';item.textContent=group.name;item.onclick=()=>{currentSelectedGroup=group.name;updateSelectedGroupDisplay();sessionTitleInput.value='';toggleSelectGroupDropdown(false);updateTitleColorButton()};selectGroupDropdown.appendChild(item)});const newGroupContainer=document.createElement('div');newGroupContainer.className='p-2 border-t border-gray-600 flex items-center gap-2';const newManageGroupsBtn=document.createElement('button');newManageGroupsBtn.className='p-1 text-gray-400 hover:text-white transition-colors';newManageGroupsBtn.title='Gestionar Grupos y Títulos (Avanzado)';newManageGroupsBtn.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.58-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.49.49 0 0 0-.48-.44H9.15a.49.49 0 0 0-.48.44l-.36 2.54c-.59-.24-1.13-.57-1.62-.94l-2.39-.96a.49.49 0 0 0-.58.22l-1.92 3.32a.49.49 0 0 0 .12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12-.61l1.92 3.32a.49.49 0 0 0 .58.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54a.49.49 0 0 0 .48.44h3.7a.49.49 0 0 0 .48.44l.36-2.54c.59-.24 1.13-.57 1.62-.94l2.39.96a.49.49 0 0 0 .58-.22l1.92-3.32a.49.49 0 0 0-.12-.61l-2.01-1.58z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;newManageGroupsBtn.onclick=(e)=>{e.stopPropagation();closePopovers();toggleManageGroupsModal(true)};const newGroupDropdownInput=document.createElement('input');newGroupDropdownInput.type='text';newGroupDropdownInput.placeholder='Crear nuevo grupo...';newGroupDropdownInput.className='bg-gray-600 border-gray-500 text-white text-sm rounded w-full p-1.5 flex-grow';newGroupDropdownInput.onclick=(e)=>e.stopPropagation();newGroupDropdownInput.onkeydown=(e)=>{if(e.key==='Enter'){addNewGroup(e.target.value);toggleSelectGroupDropdown(false)}};newGroupContainer.appendChild(newManageGroupsBtn);newGroupContainer.appendChild(newGroupDropdownInput);selectGroupDropdown.appendChild(newGroupContainer)}
+        function renderSelectTitleDropdown(suggestions=null){const container=selectTitleDropdown;container.innerHTML='';const group=titleGroups.find(g=>g.name===currentSelectedGroup);const titlesToDisplay=suggestions!==null?suggestions:(group?group.titles:[]);if(titlesToDisplay.length===0){const message=suggestions!==null?"No hay coincidencias.":"No hay títulos. Escribe uno nuevo y presiona Enter.";container.innerHTML=`<div class="px-4 py-2 text-gray-500 text-center">${message}</div>`;return}titlesToDisplay.forEach(titleObj=>{const item=document.createElement('div');item.className='title-dropdown-item flex items-center justify-between px-4 py-2 hover:bg-gray-600 group';item.draggable=true;item.dataset.title=titleObj.name;const textSpan=document.createElement('span');textSpan.textContent=titleObj.name;textSpan.className='flex-grow cursor-pointer';textSpan.onclick=()=>selectTitle(titleObj.name);const controlsContainer=document.createElement('div');controlsContainer.className='flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity';const colorBtn=document.createElement('button');colorBtn.className='text-gray-500 hover:text-white';colorBtn.title='Cambiar color';const colorSwatch=document.createElement('div');colorSwatch.className='w-4 h-4 rounded-full border-2 border-gray-500';colorSwatch.style.backgroundColor=titleObj.color;colorBtn.appendChild(colorSwatch);colorBtn.onclick=(e)=>{e.stopPropagation();showColorPalette(e.currentTarget,currentSelectedGroup,titleObj.name,()=>{renderSelectTitleDropdown();updateTitleColorButton()})};const editBtn=document.createElement('button');editBtn.className='text-gray-500 hover:text-sky-400';editBtn.title='Editar título';editBtn.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;editBtn.onclick=(e)=>{e.stopPropagation();const currentTitle=textSpan.textContent;const input=document.createElement('input');input.type='text';input.value=currentTitle;input.className='bg-gray-500 text-white rounded w-full p-1 text-sm';input.onclick=(e)=>e.stopPropagation();const saveChanges=()=>{const newTitle=input.value.trim().toUpperCase();if(newTitle&&newTitle!==currentTitle){const group=titleGroups.find(g=>g.name===currentSelectedGroup);if(group&&!group.titles.some(t=>t.name.toUpperCase()===newTitle)){updateTitleGlobally(currentSelectedGroup,currentTitle,newTitle)}else{item.replaceChild(textSpan,input)}}else{item.replaceChild(textSpan,input)}};input.onblur=saveChanges;input.onkeydown=(e)=>{if(e.key==='Enter'){saveChanges()}else if(e.key==='Escape'){item.replaceChild(textSpan,input)}};item.replaceChild(input,textSpan);input.focus();input.select()};const deleteBtn=document.createElement('button');deleteBtn.className='text-gray-500 hover:text-red-500';deleteBtn.title='Eliminar título';deleteBtn.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z"/></svg>`;deleteBtn.onclick=(e)=>{e.stopPropagation();promptDelete({type:'title',groupName:currentSelectedGroup,titleName:titleObj.name});toggleSelectTitleDropdown(false)};item.appendChild(textSpan);controlsContainer.appendChild(colorBtn);controlsContainer.appendChild(editBtn);controlsContainer.appendChild(deleteBtn);item.appendChild(controlsContainer);container.appendChild(item)});setupTitleReordering()}
+        function setupDragAndDrop(){const draggables=document.querySelectorAll('.title-item');const dropZones=document.querySelectorAll('.group-drop-zone');draggables.forEach(draggable=>{draggable.addEventListener('dragstart',()=>draggable.classList.add('dragging'));draggable.addEventListener('dragend',()=>draggable.classList.remove('dragging'))});dropZones.forEach(zone=>{zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drop-zone')});zone.addEventListener('dragleave',()=>zone.classList.remove('drop-zone'));zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('drop-zone');const draggingItem=document.querySelector('.dragging');if(!draggingItem)return;const sourceGroup=titleGroups.find(g=>g.name===draggingItem.dataset.sourceGroup);const destGroup=titleGroups.find(g=>g.name===zone.dataset.groupName);const titleName=draggingItem.dataset.titleName;if(sourceGroup&&destGroup&&sourceGroup!==destGroup){const titleIndex=sourceGroup.titles.findIndex(t=>t.name===titleName);if(titleIndex>-1){const[movedTitle]=sourceGroup.titles.splice(titleIndex,1);destGroup.titles.push(movedTitle);saveData();renderGroupManager()}}})})}
+        function setupTitleReordering(){const container=selectTitleDropdown;const items=container.querySelectorAll('.title-dropdown-item');items.forEach(item=>{item.addEventListener('dragstart',()=>item.classList.add('dragging'));item.addEventListener('dragend',()=>item.classList.remove('dragging'))});container.addEventListener('dragover',e=>e.preventDefault());container.addEventListener('drop',e=>{e.preventDefault();const draggingItem=container.querySelector('.dragging');if(!draggingItem)return;const afterElement=[...items].find(item=>e.clientY<=item.getBoundingClientRect().top+item.offsetHeight/2&&item!==draggingItem);const group=titleGroups.find(g=>g.name===currentSelectedGroup);if(!group)return;const draggedTitleName=draggingItem.dataset.title;const oldIndex=group.titles.findIndex(t=>t.name===draggedTitleName);if(oldIndex===-1)return;const[draggedTitle]=group.titles.splice(oldIndex,1);if(afterElement){const referenceTitleName=afterElement.dataset.title;const newIndex=group.titles.findIndex(t=>t.name===referenceTitleName);group.titles.splice(newIndex,0,draggedTitle)}else{group.titles.push(draggedTitle)}saveData();renderSelectTitleDropdown()})}
+        function addNewGroup(groupName){const name=groupName.trim().toUpperCase();if(name&&!titleGroups.some(g=>g.name===name)){titleGroups.push({name:name,titles:[]});saveData();if(!manageGroupsModal.classList.contains('hidden'))renderGroupManager();newGroupInput.value=''}}
+        function addNewTitleToGroup(groupName,titleName,shouldRenderManager=true){const title=titleName.trim().toUpperCase();const group=titleGroups.find(g=>g.name===groupName);if(title&&group&&!group.titles.some(t=>t.name.toUpperCase()===title)){group.titles.push({name:title,color:defaultColor.hex});saveData();if(shouldRenderManager&&!manageGroupsModal.classList.contains('hidden')){renderGroupManager()}}}
+        function updateTitleGlobally(groupName,oldTitle,newTitle){const group=titleGroups.find(g=>g.name===groupName);if(group){const titleObj=group.titles.find(t=>t.name.toUpperCase()===oldTitle.toUpperCase());if(titleObj){titleObj.name=newTitle}}sessionHistory.forEach(session=>{if(session.group===groupName&&session.title.toUpperCase()===oldTitle.toUpperCase()){session.title=newTitle}});if(sessionTitleInput.value.toUpperCase()===oldTitle.toUpperCase()){sessionTitleInput.value=newTitle}saveData();renderHistory();renderSelectTitleDropdown()}
+        function findTitleObject(titleName,groupName){const group=titleGroups.find(g=>g.name===groupName);if(!group)return null;return group.titles.find(t=>t.name.toUpperCase()===titleName.toUpperCase())||null}
+        function findTitleAndGroup(titleName){const upperTitle=titleName.toUpperCase();for(const group of titleGroups){const foundTitle=group.titles.find(t=>t.name.toUpperCase()===upperTitle);if(foundTitle){return{title:foundTitle.name,group:group.name}}}return null}
+        function promptDelete(payload){deletePayload=payload;let message='';if(payload.type==='title'){message=`Se eliminarán permanentemente el título "${payload.titleName}" y todas sus sesiones del historial.`}else if(payload.type==='group'){message=`Se eliminarán permanentemente el grupo "${payload.groupName}", todos sus títulos y todas sus sesiones del historial.`}else if(payload.type==='session'){message=`¿Eliminar permanentemente la sesión de ${payload.time}?`}confirmDeleteMessage.textContent=message;confirmDeleteOverlay.classList.remove('hidden');confirmDeleteOverlay.classList.add('flex')}
+        function confirmDelete(){if(!deletePayload)return;if(deletePayload.type==='session'){sessionHistory.splice(deletePayload.index,1)}else if(deletePayload.type==='title'){const{groupName,titleName}=deletePayload;const group=titleGroups.find(g=>g.name===groupName);if(group){const titleIndex=group.titles.findIndex(t=>t.name.toUpperCase()===titleName.toUpperCase());if(titleIndex>-1){group.titles.splice(titleIndex,1);if(sessionTitleInput.value.toUpperCase()===titleName.toUpperCase()){sessionTitleInput.value=""}sessionHistory=sessionHistory.filter(s=>!(s.title.toUpperCase()===titleName.toUpperCase()&&s.group===groupName))}}}else if(deletePayload.type==='group'){const{groupName}=deletePayload;const groupIndex=titleGroups.findIndex(g=>g.name===groupName);if(groupIndex>-1){const titlesInGroup=titleGroups[groupIndex].titles.map(t=>t.name.toUpperCase());if(titlesInGroup.includes(sessionTitleInput.value.toUpperCase())){sessionTitleInput.value=""}if(currentSelectedGroup===groupName){currentSelectedGroup='ESTUDIOS';updateSelectedGroupDisplay()}titleGroups.splice(groupIndex,1);sessionHistory=sessionHistory.filter(s=>s.group!==groupName)}}saveData();renderGroupManager();renderHistory();renderStatsChart();closeConfirmDelete()}
+        function closeConfirmDelete(){confirmDeleteOverlay.classList.add('hidden');confirmDeleteOverlay.classList.remove('flex');deletePayload=null}
+        function selectTitle(title){sessionTitleInput.value=title;sessionTitleInput.dataset.justSelected="true";toggleSelectTitleDropdown(false);updateTitleColorButton();
+            sessionSubtitleInput.value = ''; // <-- NUEVO (limpiar subtítulo al cambiar de título)
+            sessionSubtitleInput.focus(); // <-- NUEVO (enfocar subtítulo)
+        }
+        function updateTitleColorButton(){const colorBtn=document.getElementById('title-color-btn');const colorSwatch=document.getElementById('title-color-swatch');const titleName=sessionTitleInput.value;const titleObj=titleName?findTitleObject(titleName,currentSelectedGroup):null;if(titleObj){colorBtn.classList.remove('hidden');colorSwatch.style.backgroundColor=titleObj.color;colorSwatch.style.borderColor='#6b7280';colorBtn.style.cursor='pointer';colorBtn.disabled=false}else{colorBtn.classList.remove('hidden');colorSwatch.style.backgroundColor='transparent';colorSwatch.style.borderColor='#4b5563';colorBtn.style.cursor='not-allowed';colorBtn.disabled=true}}
+        function updateSelectedGroupDisplay(){const abbrDisplay=document.getElementById('selected-group-abbr');if(abbrDisplay){abbrDisplay.textContent=getGroupAbbreviation(currentSelectedGroup);abbrDisplay.title=currentSelectedGroup}}
+        function updateEstimatedFinishTime(){const finishTimeElement=document.getElementById('estimated-finish-time');const workHours=parseInt(workHoursInput.value)||0;const workMinutes=parseInt(workMinutesInput.value)||0;const workSeconds=parseInt(workSecondsInput.value)||0;const restHours=parseInt(restHoursInput.value)||0;const restMinutes=parseInt(restMinutesInput.value)||0;const restSeconds=parseInt(restSecondsInput.value)||0;const totalDurationSeconds=(workHours*3600)+(workMinutes*60)+workSeconds+(restHours*3600)+(restMinutes*60)+restSeconds;if(totalDurationSeconds<=0){finishTimeElement.innerHTML='&nbsp;';return}const now=new Date();const finishTime=new Date(now.getTime()+totalDurationSeconds*1000);const formattedFinishTime=finishTime.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});finishTimeElement.textContent=`Finaliza aprox. a las ${formattedFinishTime} h.`}
+        function toggleStatsModal(show){const isVisible=!statsOverlay.classList.contains('hidden');const shouldShow=show===undefined?!isVisible:show;if(shouldShow){statsOverlay.classList.remove('hidden');statsOverlay.classList.add('flex');populateGroupFilter();populateTitleFilter();renderStatsChart();updateStatsColorButton()}else{statsOverlay.classList.add('hidden');statsOverlay.classList.remove('flex')}}
+        function populateGroupFilter(){const lastSelected=statsGroupFilter.value||'ESTUDIOS';statsGroupFilter.innerHTML='';const specialOrder=['ESTUDIOS','SIN GRUPO'];const regularGroups=titleGroups.map(g=>g.name).filter(name=>!specialOrder.includes(name)).sort((a,b)=>a.localeCompare(b));const sortedGroupNames=['ESTUDIOS',...regularGroups,'SIN GRUPO'];sortedGroupNames.forEach(groupName=>{if(titleGroups.some(g=>g.name===groupName)){const option=document.createElement('option');option.value=groupName;option.textContent=getGroupAbbreviation(groupName);option.title=groupName;statsGroupFilter.appendChild(option)}});const allGroupsOption=document.createElement('option');allGroupsOption.value='TODOS';allGroupsOption.textContent=getGroupAbbreviation('TODOS');allGroupsOption.title='TODOS LOS GRUPOS';statsGroupFilter.appendChild(allGroupsOption);statsGroupFilter.value=lastSelected}
+        function populateTitleFilter(){const selectedGroup=statsGroupFilter.value;const groupAbbr=getGroupAbbreviation(selectedGroup);statsTitleFilter.innerHTML=`<option value="TODOS">TODOS (${groupAbbr})</option>`;let titlesToShow=[];if(selectedGroup==='TODOS'){titlesToShow=[...new Set(titleGroups.flatMap(g=>g.titles.map(t=>t.name)))]}else{const group=titleGroups.find(g=>g.name===selectedGroup);if(group)titlesToShow=group.titles.map(t=>t.name)}titlesToShow.sort().forEach(title=>{const option=document.createElement('option');option.value=title;option.textContent=title;statsTitleFilter.appendChild(option)})}
+        function updateStatsColorButton(){const colorBtn=document.getElementById('stats-title-color-btn');const colorSwatch=document.getElementById('stats-title-color-swatch');const selectedTitleName=statsTitleFilter.value;if(selectedTitleName==='TODOS'){colorBtn.classList.add('hidden');return}let groupForColor=statsGroupFilter.value;if(groupForColor==='TODOS'){const found=findTitleAndGroup(selectedTitleName);if(found)groupForColor=found.group}const titleObj=findTitleObject(selectedTitleName,groupForColor);if(titleObj){colorBtn.classList.remove('hidden');colorSwatch.style.backgroundColor=titleObj.color}else{colorBtn.classList.add('hidden')}}
+        function renderAttendanceCircles(){attendanceCirclesContainer.innerHTML='';updateAttendanceLockIcon();const weekStart=new Date(currentDateForStats);weekStart.setDate(weekStart.getDate()-(weekStart.getDay()===0?6:weekStart.getDay()-1));weekStart.setHours(0,0,0,0);for(let i=0;i<7;i++){const day=new Date(weekStart);day.setDate(day.getDate()+i);const dayKey=day.toLocaleDateString('sv-SE');if(!attendanceData[dayKey]){const dayOfWeek=day.getDay();const defaultDivisions=(dayOfWeek>=1&&dayOfWeek<=5)?5:1;attendanceData[dayKey]={d:defaultDivisions,f:0}}const data=attendanceData[dayKey];const container=document.createElement('div');container.className='attendance-circle-container w-12 h-12 cursor-pointer';const dayOfWeek=day.getDay();if(dayOfWeek>=1&&dayOfWeek<=5){container.classList.add('weekday')}const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 100 100');const g=document.createElementNS('http://www.w3.org/2000/svg','g');for(let j=0;j<data.f;j++){g.appendChild(createArc(j,data.d,'#FFFFFF'))}const circle=document.createElementNS('http://www.w3.org/2000/svg','circle');circle.setAttribute('cx','50');circle.setAttribute('cy','50');circle.setAttribute('r','48');circle.setAttribute('fill','transparent');circle.setAttribute('stroke','#38bdf8');circle.setAttribute('stroke-width','2');g.appendChild(circle);if(data.d>1){for(let j=0;j<data.d;j++){const angle=(j/data.d)*2*Math.PI;const line=document.createElementNS('http://www.w3.org/2000/svg','line');line.setAttribute('x1','50');line.setAttribute('y1','50');line.setAttribute('x2',50+48*Math.cos(angle-Math.PI/2));line.setAttribute('y2',50+48*Math.sin(angle-Math.PI/2));line.setAttribute('stroke','#38bdf8');line.setAttribute('stroke-width','2');g.appendChild(line)}}svg.appendChild(g);container.appendChild(svg);container.addEventListener('click',(e)=>handleCircleClick(e,dayKey));container.addEventListener('contextmenu',(e)=>handleCircleClick(e,dayKey));attendanceCirclesContainer.appendChild(container)}}
+        function createArc(index,totalDivisions,color){const path=document.createElementNS('http://www.w3.org/2000/svg','path');const startAngle=(index/totalDivisions)*360;const endAngle=((index+1)/totalDivisions)*360;const start=polarToCartesian(50,50,48,endAngle);const end=polarToCartesian(50,50,48,startAngle);const largeArcFlag=endAngle-startAngle<=180?"0":"1";const d=["M",50,50,"L",start.x,start.y,"A",48,48,0,largeArcFlag,0,end.x,end.y,"Z"].join(" ");path.setAttribute("d",d);path.setAttribute("fill",color);return path}
+        function polarToCartesian(centerX,centerY,radius,angleInDegrees){const angleInRadians=(angleInDegrees-90)*Math.PI/180;return{x:centerX+(radius*Math.cos(angleInRadians)),y:centerY+(radius*Math.sin(angleInRadians))}}
+        function handleCircleClick(event,dayKey){event.preventDefault();if(isAttendanceLocked)return;const data=attendanceData[dayKey];if(event.altKey){if(event.type==='contextmenu'||event.button===2){data.d=Math.max(1,data.d-1)}else{data.d=Math.min(10,data.d+1)}if(data.f>data.d)data.f=data.d}else{data.f++;if(data.f>data.d){data.f=0}}saveData();renderAttendanceCircles()}
+        function toggleAttendanceLock(){isAttendanceLocked=!isAttendanceLocked;saveData();updateAttendanceLockIcon()}
+        function updateAttendanceLockIcon(){if(isAttendanceLocked){attendanceLockBtn.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>`;attendanceLockBtn.title="Desbloquear edición";attendanceLockBtn.classList.add('text-sky-400')}else{attendanceLockBtn.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>`;attendanceLockBtn.title="Bloquear edición";attendanceLockBtn.classList.remove('text-sky-400')}}
+        function renderStatsChart() {
+            renderAttendanceCircles();
+            const selectedGroup = statsGroupFilter.value;
+            const selectedTitle = statsTitleFilter.value;
+        
+            // Esta variable la necesitamos en el callback del tooltip
+            const weekStart = new Date(currentDateForStats);
+            weekStart.setDate(weekStart.getDate() - (weekStart.getDay() === 0 ? 6 : weekStart.getDay() - 1));
+            weekStart.setHours(0, 0, 0, 0);
+        
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekEnd.getDate() + 6);
+            weekEnd.setHours(23, 59, 59, 999);
+            weekDisplay.textContent = `${weekStart.toLocaleDateString('es-ES', { day: 'numeric' })} - ${weekEnd.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+            const labels = Array.from({ length: 7 }, (_, i) => {
+                const day = new Date(weekStart);
+                day.setDate(day.getDate() + i);
+                return day.toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit' }).toUpperCase()
+            });
+            const getFilteredHistory = (group, title) => sessionHistory.filter(s => {
+                const sessionDate = new Date(s.endTime);
+                const groupMatch = group === 'TODOS' || s.group === group;
+                const titleMatch = title === 'TODOS' || s.title.toUpperCase() === title.toUpperCase();
+                return sessionDate >= weekStart && sessionDate <= weekEnd && groupMatch && titleMatch
+            });
+            const historyForSelectedGroup = getFilteredHistory(selectedGroup, 'TODOS');
+            let totalWeeklySeconds = 0;
+        
+            // Esta variable también es clave para el callback
+            const currentViewHistory = getFilteredHistory(selectedGroup, selectedTitle);
+            currentViewHistory.forEach(s => totalWeeklySeconds += (s.workTimePrimary + s.workTimeSecondary));
+            weeklyTotalTime.textContent = `Total: ${formatMinutesToHHMM(totalWeeklySeconds / 60)} Hrs.`;
+            
+            let datasets;
+            
+            // --- MODIFICACIÓN AQUÍ ---
+            // Se ha actualizado el callback `afterBody` para la nueva lógica de desglose
+            let chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: '#9ca3af', callback: (v) => formatMinutesToHHMM(v) },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                        title: { display: true, text: 'Tiempo (HH:MM)', color: '#9ca3af' }
+                    },
+                    x: {
+                        ticks: { color: '#9ca3af' },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (c) => `${c.dataset.label || ''}: ${formatMinutesToHHMM(c.parsed.y)}`,
+                            
+                            // --- LÓGICA DE SUBTÍTULOS REFINADA ---
+                            afterBody: function(tooltipItems) {
+                                // Map para almacenar: { "Nombre Subtítulo" => totalSegundos }
+                                const subtitleTimes = new Map();
+                                
+                                const dayIndex = tooltipItems[0].dataIndex;
+                                const dayDate = new Date(weekStart);
+                                dayDate.setDate(dayDate.getDate() + dayIndex);
+                                const dayKey = dayDate.toLocaleDateString('sv-SE'); // ej: "2025-11-05"
+
+                                tooltipItems.forEach(item => {
+                                    let taskTitle;
+                                    let isPrimary;
+
+                                    // 1. Identificar qué representa este segmento de barra
+                                    if (selectedTitle === 'TODOS') {
+                                        const label = item.dataset.label;
+                                        if (label.includes(' (Teoría)')) {
+                                            taskTitle = label.replace(' (Teoría)', '');
+                                            isPrimary = true;
+                                        } else if (label.includes(' (Práctica)')) {
+                                            taskTitle = label.replace(' (Práctica)', '');
+                                            isPrimary = false;
+                                        } else {
+                                            return; // No es un segmento de datos válido
+                                        }
+                                    } else {
+                                        taskTitle = selectedTitle;
+                                        const label = item.dataset.label;
+                                        if (label === 'Teoría') isPrimary = true;
+                                        else if (label === 'Práctica') isPrimary = false;
+                                        else return; // No es un segmento de datos (ej. "Potencial")
+                                    }
+
+                                    // 2. Filtrar historial para encontrar sesiones y agrupar por subtítulo
+                                    currentViewHistory.forEach(session => {
+                                        const sessionDateKey = (new Date(session.endTime)).toLocaleDateString('sv-SE');
+                                        const sessionIsPrimary = session.workTimePrimary > 0;
+                                        const sessionDuration = session.workTimePrimary + session.workTimeSecondary;
+
+                                        // Comprobar si coincide el día, título y tipo (Teoría/Práctica)
+                                        if (session.title.toUpperCase() === taskTitle.toUpperCase() &&
+                                            sessionDateKey === dayKey &&
+                                            sessionIsPrimary === isPrimary &&
+                                            sessionDuration > 0) 
+                                        {
+                                            const subtitle = session.subtitle || '(Sin subtítulo)';
+                                            const currentTotal = subtitleTimes.get(subtitle) || 0;
+                                            subtitleTimes.set(subtitle, currentTotal + sessionDuration);
+                                        }
+                                    });
+                                });
+
+                                // 3. Formatear la salida según las nuevas reglas
+                                if (subtitleTimes.size === 0) return [];
+
+                                const subtitleArray = Array.from(subtitleTimes.entries())
+                                    .filter(([subtitle, time]) => time > 0); // Filtrar entradas de 0 tiempo
+
+                                if (subtitleArray.length === 0) return [];
+
+                                // --- LÓGICA DE SCENARIOS REFINADA ---
+
+                                // Scenario 1: Si la única entrada es "(Sin subtítulo)", no mostrar desglose.
+                                if (subtitleArray.length === 1 && subtitleArray[0][0] === '(Sin subtítulo)') {
+                                    return [];
+                                }
+
+                                // Scenario 2: Si hay UNA sola entrada Y TIENE nombre, mostrar solo el nombre.
+                                if (subtitleArray.length === 1 && subtitleArray[0][0] !== '(Sin subtítulo)') {
+                                    const subtitleName = subtitleArray[0][0];
+                                    const prefix = 'Desglose:';
+                                    const outputLines = [`  - ${subtitleName}`]; // Sin tiempo
+                                    return ["", prefix].concat(outputLines);
+                                }
+
+                                // Scenario 3: Si hay MÁS de una entrada (ej. "Guía 3" y "Certamen 2", o "Guía 3" y "(Sin subtítulo)"),
+                                // mostrar el desglose completo con tiempos.
+                                if (subtitleArray.length > 1) {
+                                    subtitleArray.sort((a, b) => b[1] - a[1]); // Ordenar por tiempo
+                                    const prefix = 'Desglose:';
+                                    const outputLines = subtitleArray.map(([subtitle, time]) => {
+                                        const formattedTime = formatHistoryTime(time);
+                                        return `  - ${subtitle} (${formattedTime})`;
+                                    });
+                                    return ["", prefix].concat(outputLines);
+                                }
+                                
+                                return []; // Fallback por si acaso
+                            }
+                            // --- FIN DE LÓGICA ACTUALIZADA ---
+                        }
+                    }
+                }
+            };
+            // --- FIN DE MODIFICACIÓN ---
+
+            const historyForMaxScale = getFilteredHistory(selectedGroup, 'TODOS');
+            const maxDailyTotals = Array(7).fill(0);
+            for (let i = 0; i < 7; i++) {
+                const day = new Date(weekStart);
+                day.setDate(day.getDate() + i);
+                const sessionsOnDay = historyForMaxScale.filter(s => (new Date(s.endTime)).toLocaleDateString('sv-SE') === day.toLocaleDateString('sv-SE'));
+                const totalPrimaryOnDay = sessionsOnDay.reduce((acc, s) => acc + s.workTimePrimary, 0);
+                const totalSecondaryOnDay = sessionsOnDay.reduce((acc, s) => acc + s.workTimeSecondary, 0);
+                maxDailyTotals[i] = totalPrimaryOnDay + Math.max(totalPrimaryOnDay, totalSecondaryOnDay)
+            }
+            const maxTime = Math.max(...maxDailyTotals);
+            chartOptions.scales.y.max = maxTime > 0 ? (maxTime / 60) * 1.1 : undefined;
+            
+            if (selectedTitle === 'TODOS') {
+                const tasksByDay = {};
+                currentViewHistory.forEach(s => {
+                    const dayIndex = (new Date(s.endTime).getDay() + 6) % 7;
+                    const key = s.title;
+                    if (!tasksByDay[key]) { tasksByDay[key] = { primary: Array(7).fill(0), secondary: Array(7).fill(0), group: s.group } }
+                    tasksByDay[key].primary[dayIndex] += s.workTimePrimary / 60;
+                    tasksByDay[key].secondary[dayIndex] += s.workTimeSecondary / 60
+                });
+                datasets = [];
+                Object.keys(tasksByDay).forEach(titleName => {
+                    const titleObj = findTitleObject(titleName, tasksByDay[titleName].group);
+                    const color = titleObj ? titleObj.color : defaultColor.hex;
+                    datasets.push({
+                        label: titleName + ' (Teoría)',
+                        data: tasksByDay[titleName].primary,
+                        backgroundColor: color,
+                        borderColor: hexToRgba(color, 1),
+                        borderWidth: 1,
+                        stack: titleName,
+                        borderRadius: 5,
+                    });
+                    datasets.push({
+                        label: titleName + ' (Práctica)',
+                        data: tasksByDay[titleName].secondary,
+                        backgroundColor: createDiagonalPattern(color),
+                        borderColor: hexToRgba(color, 1),
+                        borderWidth: 1,
+                        stack: titleName,
+                        borderRadius: 5,
+                    })
+                });
+                chartOptions.scales.x.stacked = true;
+                chartOptions.scales.y.stacked = true;
+                // Sobrescribimos 'label' solo para este modo, pero 'afterBody' se mantiene
+                chartOptions.plugins.tooltip.callbacks.label = (c) => `${c.dataset.label}: ${formatMinutesToHHMM(c.raw)}`
+            } else {
+                let barColorHex = defaultColor.hex;
+                const groupForColor = selectedGroup === 'TODOS' ? findTitleAndGroup(selectedTitle).group : selectedGroup;
+                const titleObj = findTitleObject(selectedTitle, groupForColor);
+                if (titleObj) barColorHex = titleObj.color;
+                const primaryData = Array(7).fill(0);
+                const secondaryData = Array(7).fill(0);
+                const secondaryPotential = Array(7).fill(0);
+                currentViewHistory.forEach(s => {
+                    const dayIndex = (new Date(s.endTime).getDay() + 6) % 7;
+                    primaryData[dayIndex] += s.workTimePrimary / 60;
+                    secondaryData[dayIndex] += s.workTimeSecondary / 60
+                });
+                for (let i = 0; i < 7; i++) {
+                    if (primaryData[i] > 0) { secondaryPotential[i] = Math.max(0, primaryData[i] - secondaryData[i]) }
+                }
+                datasets = [{
+                    label: 'Teoría',
+                    data: primaryData,
+                    backgroundColor: barColorHex,
+                    borderColor: hexToRgba(barColorHex, 1),
+                    borderWidth: 1,
+                    stack: 'stack 0',
+                    borderRadius: 5,
+                }, {
+                    label: 'Práctica',
+                    data: secondaryData,
+                    backgroundColor: createDiagonalPattern(barColorHex),
+                    borderColor: hexToRgba(barColorHex, 1),
+                    borderWidth: 1,
+                    stack: 'stack 0',
+                    borderRadius: 5,
+                }, {
+                    label: 'Práctica (Potencial)',
+                    data: secondaryPotential,
+                    backgroundColor: createEmptyDiagonalPattern(barColorHex),
+                    borderColor: hexToRgba(barColorHex, 0.5),
+                    borderWidth: 1,
+                    stack: 'stack 0',
+                    borderRadius: 5,
+                }];
+                chartOptions.scales.x.stacked = true;
+                chartOptions.scales.y.stacked = true;
+                // Aquí usamos el 'label' callback que definimos al inicio
+            }
+            if (statsChart) statsChart.destroy();
+            statsChart = new Chart(statsChartCanvas, { type: 'bar', data: { labels, datasets }, options: chartOptions })
+        }
+        function setupMouseWheelListeners(){document.querySelectorAll('input[type="number"]').forEach(input=>{if(input.id.includes('seconds'))return;const updateValue=(e)=>{e.preventDefault();let val=parseInt(input.value)||0;if(input.id.includes('minutes')){if(e.ctrlKey){val+=e.deltaY<0?1:-1}else{const remainder=val%5;if(e.deltaY<0){if(remainder===0){val+=5}else{val+=(5-remainder)}}else{if(remainder===0){val-=5}else{val-=remainder}}}}else{val+=e.deltaY<0?1:-1}if(input.id.includes('hours'))val=Math.max(0,Math.min(24,val));else val=Math.max(0,Math.min(59,val));input.value=val;updateEstimatedFinishTime()};input.addEventListener('wheel',updateValue)})}
+        
+        async function initializeApp(){
+            setupMouseWheelListeners();
+            await loadData();
+            updateSelectedGroupDisplay();
+            updateTitleColorButton();
+            renderHistory();
+            updateEstimatedFinishTime();
+            const timeInputs=[workHoursInput,workMinutesInput,workSecondsInput,restHoursInput,restMinutesInput,restSecondsInput];
+            timeInputs.forEach(input=>{
+                input.addEventListener('input',updateEstimatedFinishTime);
+                input.addEventListener('change',updateEstimatedFinishTime)
+            });
+            // La parte de 'onToggleNotepad' se eliminó
+        }
+        
+        const tutorialSteps=[{title:"¡Bienvenido a Flowtime!",content:"Este rápido tutorial te guiará por las funciones principales. Usa los botones para navegar o las flechas del teclado."},{elementId:'session-title-container',title:"1. Define tu Tarea",content:"Aquí escribes o seleccionas el título de tu sesión. Puedes organizar tareas en <strong>grupos</strong> usando el botón de la izquierda.",position:'bottom'},{elementId:'time-inputs-container',title:"2. Establece los Tiempos",content:"Ingresa tu tiempo de <strong>trabajo</strong> y tu <strong>presupuesto de descanso</strong>. <br><strong>Tip:</strong> Usa <kbd class='text-xs bg-gray-700 px-1.5 py-1 rounded'>Ctrl</kbd> + Rueda del mouse para ajustar los minutos.",position:'bottom'},{elementId:'start-btn',title:"3. Inicia la Sesión",content:"Una vez que todo esté listo, presiona este botón para comenzar. ¡A concentrarse!",position:'top'},{title:"Durante la Sesión...",content:"Verás una barra de progreso de trabajo y un temporizador con tu descanso. Podrás pausar el tiempo de descanso o cambiar entre modo <strong>Teoría</strong> y <strong>Práctica</strong>."},{elementId:'history-toggle-btn',title:"4. Revisa tu Progreso",content:"Haz clic aquí para ver tu <strong>historial de sesiones</strong>. También puedes añadir entradas manuales si olvidaste usar el temporizador.",position:'left'},{elementId:'stats-btn',title:"5. Analiza tus Estadísticas",content:"Dentro del historial, encontrarás este botón para abrir un <strong>gráfico detallado</strong> de tu tiempo trabajado por semana y tarea.",position:'top',preAction:()=>{if(historySidebar.classList.contains('translate-x-full')){toggleHistorySidebar(true)}}},{title:"Atajos de Teclado Útiles",content:"<ul class='list-disc list-inside space-y-2'><li><kbd class='bg-gray-700 px-2 py-1 rounded'>Alt</kbd> + <kbd class='bg-gray-700 px-2 py-1 rounded'>A</kbd> - Mostrar/Ocultar app.</li><li><kbd class='bg-gray-700 px-2 py-1 rounded'>Alt</kbd> + <kbd class='bg-gray-700 px-2 py-1 rounded'>S</kbd> - Abrir bloc y activar descanso.</li><li><kbd class='bg-gray-700 px-2 py-1 rounded'>G</kbd> - Abrir/Cerrar Estadísticas.</li><li><kbd class='bg-gray-700 px-2 py-1 rounded'>H</kbd> - Abrir este tutorial.</li><li><kbd class='bg-gray-700 px-2 py-1 rounded'>Espacio</kbd> - Pausar descanso (si no escribes).</li><li><kbd class='bg-gray-700 px-2 py-1 rounded'>Esc</kbd> - Detener sesión / Cerrar ventanas.</li></ul>",preAction:()=>{if(!historySidebar.classList.contains('translate-x-full')){toggleHistorySidebar(false)}}}];
+        function startTutorial(){toggleHistorySidebar(false);toggleStatsModal(false);currentTutorialStep=0;tutorialOverlay.classList.remove('hidden');void tutorialOverlay.offsetWidth;tutorialOverlay.style.opacity='1';showTutorialStep(currentTutorialStep)}
+        function endTutorial(){tutorialOverlay.style.opacity='0';tutorialModal.classList.remove('visible');setTimeout(()=>{tutorialOverlay.classList.add('hidden');Object.assign(tutorialSpotlight.style,{width:'0px',height:'0px',top:'50%',left:'50%'})},300)}
+        function showTutorialStep(index){const step=tutorialSteps[index];if(!step)return;if(step.preAction){step.preAction()}tutorialTitle.innerHTML=step.title;tutorialContent.innerHTML=step.content;tutorialStepCounter.textContent=`${index+1} / ${tutorialSteps.length}`;tutorialPrevBtn.style.display=index===0?'none':'inline-block';tutorialNextBtn.style.display=index===tutorialSteps.length-1?'none':'inline-block';tutorialFinishBtn.style.display=index===tutorialSteps.length-1?'inline-block':'none';setTimeout(()=>{positionTutorialElements(step)},100)}
+        function positionTutorialElements(step){const targetElement=step.elementId?document.getElementById(step.elementId):null;if(targetElement){const rect=targetElement.getBoundingClientRect();const padding=10;Object.assign(tutorialSpotlight.style,{width:`${rect.width+padding}px`,height:`${rect.height+padding}px`,top:`${rect.top-padding/2}px`,left:`${rect.left-padding/2}px`,borderRadius:window.getComputedStyle(targetElement).borderRadius});const modalRect=tutorialModal.getBoundingClientRect();let modalTop,modalLeft;switch(step.position){case'top':modalTop=rect.top-modalRect.height-20;modalLeft=rect.left+(rect.width/2)-(modalRect.width/2);break;case'left':modalTop=rect.top+(rect.height/2)-(modalRect.height/2);modalLeft=rect.left-modalRect.width-20;break;default:modalTop=rect.bottom+20;modalLeft=rect.left+(rect.width/2)-(modalRect.width/2)}modalLeft=Math.max(10,Math.min(modalLeft,window.innerWidth-modalRect.width-10));modalTop=Math.max(10,Math.min(modalTop,window.innerHeight-modalRect.height-10));Object.assign(tutorialModal.style,{top:`${modalTop}px`,left:`${modalLeft}px`,transform:'none'})}else{Object.assign(tutorialSpotlight.style,{width:'0px',height:'0px',top:'50%',left:'50%'});Object.assign(tutorialModal.style,{top:'50%',left:'50%',transform:'translate(-50%, -50%)'})}tutorialModal.classList.add('visible')}
+        
+        document.addEventListener('DOMContentLoaded', initializeApp);
+        window.addEventListener('click', (e) => { if (!manageGroupsModal.classList.contains('hidden') && !manageGroupsModal.contains(e.target) && !e.target.closest('#manage-groups-modal')) { toggleManageGroupsModal(false); } closePopovers(); });
+        startBtn.addEventListener('click', startSession);
+        restToggleBtn.addEventListener('click', toggleRest);
+        taskTypeToggleBtn.addEventListener('click', toggleTaskType);
+        resetBtn.addEventListener('click', () => {
+            if (isSessionFinished) {
+                resetSession();
+            } else {
+                promptStopSession();
+            }
+        });
+        historyToggleBtn.addEventListener('click', () => toggleHistorySidebar(true));
+        sidebarOverlay.addEventListener('click', () => toggleHistorySidebar(false));
+        statsBtn.addEventListener('click', () => { toggleHistorySidebar(false); toggleStatsModal(true); });
+        statsOverlay.addEventListener('click', (e) => { if (e.target === statsOverlay) toggleStatsModal(false); });
+        prevWeekBtn.addEventListener('click', () => { currentDateForStats.setDate(currentDateForStats.getDate() - 7); renderStatsChart(); });
+        nextWeekBtn.addEventListener('click', () => { currentDateForStats.setDate(currentDateForStats.getDate() + 7); renderStatsChart(); });
+        statsGroupFilter.addEventListener('change', () => { populateTitleFilter(); renderStatsChart(); updateStatsColorButton(); });
+        statsTitleFilter.addEventListener('change', () => { renderStatsChart(); updateStatsColorButton(); });
+        addManualEntryToggleBtn.addEventListener('click', toggleManualEntryForm);
+        saveManualEntryBtn.addEventListener('click', addManualSessionToHistory);
+        cancelManualEntryBtn.addEventListener('click', toggleManualEntryForm);
+        attendanceLockBtn.addEventListener('click', toggleAttendanceLock);
+        selectGroupBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSelectGroupDropdown(true); });
+        selectTitleBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSelectTitleDropdown(true); });
+        document.getElementById('stats-title-color-btn').addEventListener('click', (e) => { e.stopPropagation(); const titleName = statsTitleFilter.value; let groupName = statsGroupFilter.value; if (groupName === 'TODOS') { const found = findTitleAndGroup(titleName); if (found) groupName = found.group; } const titleObj = findTitleObject(titleName, groupName); if (titleObj) { showColorPalette(e.currentTarget, groupName, titleName, () => { updateStatsColorButton(); renderStatsChart(); }); } });
+        document.getElementById('title-color-btn').addEventListener('click', (e) => { e.stopPropagation(); if (e.currentTarget.disabled) return; const titleName = sessionTitleInput.value; const titleObj = findTitleObject(titleName, currentSelectedGroup); if (titleObj) { showColorPalette(e.currentTarget, currentSelectedGroup, titleName, updateTitleColorButton); } });
+        tutorialBtn.addEventListener('click', startTutorial);
+        tutorialNextBtn.addEventListener('click', () => showTutorialStep(++currentTutorialStep));
+        tutorialPrevBtn.addEventListener('click', () => showTutorialStep(--currentTutorialStep));
+        tutorialFinishBtn.addEventListener('click', endTutorial);
+        statsGroupFilter.addEventListener('wheel', (e) => { e.preventDefault(); const select = e.currentTarget; let newIndex = select.selectedIndex + (e.deltaY < 0 ? -1 : 1); newIndex = Math.max(0, Math.min(select.options.length - 1, newIndex)); if (newIndex !== select.selectedIndex) { select.selectedIndex = newIndex; select.dispatchEvent(new Event('change')); } });
+        statsTitleFilter.addEventListener('wheel', (e) => { e.preventDefault(); const select = e.currentTarget; let newIndex = select.selectedIndex + (e.deltaY < 0 ? -1 : 1); newIndex = Math.max(0, Math.min(select.options.length - 1, newIndex)); if (newIndex !== select.selectedIndex) { select.selectedIndex = newIndex; select.dispatchEvent(new Event('change')); } });
+        statsChartCanvas.addEventListener('wheel', (e) => { e.preventDefault(); const select = statsTitleFilter; let newIndex = select.selectedIndex + (e.deltaY < 0 ? -1 : 1); newIndex = Math.max(0, Math.min(select.options.length - 1, newIndex)); if (newIndex !== select.selectedIndex) { select.selectedIndex = newIndex; select.dispatchEvent(new Event('change')); } });
+        selectGroupBtn.addEventListener('wheel', (e) => { e.preventDefault(); closePopovers(); const sinGrupo = titleGroups.find(g => g.name === 'SIN GRUPO'); const otherGroups = titleGroups.filter(g => g.name !== 'SIN GRUPO').sort((a, b) => a.name.localeCompare(b.name)); const sortedGroups = [...otherGroups]; if (sinGrupo) { sortedGroups.push(sinGrupo); } const currentIndex = sortedGroups.findIndex(g => g.name === currentSelectedGroup); if (currentIndex === -1) return; let newIndex = currentIndex + (e.deltaY < 0 ? -1 : 1); newIndex = Math.max(0, Math.min(sortedGroups.length - 1, newIndex)); if (newIndex !== currentIndex) { currentSelectedGroup = sortedGroups[newIndex].name; updateSelectedGroupDisplay(); sessionTitleInput.value = ''; updateTitleColorButton(); } });
+        sessionTitleInput.addEventListener('wheel', (e) => { e.preventDefault(); closePopovers(); const group = titleGroups.find(g => g.name === currentSelectedGroup); if (!group || group.titles.length === 0) return; const titlesToDisplay = group.titles; const currentTitle = sessionTitleInput.value; let currentIndex = titlesToDisplay.findIndex(t => t.name.toUpperCase() === currentTitle.toUpperCase()); if (currentIndex === -1) { currentIndex = e.deltaY < 0 ? titlesToDisplay.length : -1; } let newIndex = currentIndex + (e.deltaY < 0 ? -1 : 1); newIndex = Math.max(0, Math.min(titlesToDisplay.length - 1, newIndex)); if (newIndex !== currentIndex && titlesToDisplay[newIndex]) { selectTitle(titlesToDisplay[newIndex].name); } });
+        sessionTitleInput.addEventListener('click', () => { if (sessionTitleInput.dataset.justSelected === "true") { sessionTitleInput.value = ''; delete sessionTitleInput.dataset.justSelected; updateTitleColorButton(); } });
+        sessionTitleInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.altKey) { e.preventDefault(); startSession(); } else if (e.key === 'Enter') { e.preventDefault(); const title = sessionTitleInput.value.trim(); if (title) { addNewTitleToGroup(currentSelectedGroup, title, false); sessionTitleInput.value = ''; toggleSelectTitleDropdown(false); updateTitleColorButton(); } } });
+        sessionTitleInput.addEventListener('input', () => { updateTitleColorButton(); const query = sessionTitleInput.value.trim().toUpperCase(); if (!query) { toggleSelectTitleDropdown(false); return; } const group = titleGroups.find(g => g.name === currentSelectedGroup); if (!group) return; const suggestions = group.titles.filter(t => t.name.toUpperCase().startsWith(query)); renderSelectTitleDropdown(suggestions); if (!selectTitleDropdown.classList.contains('hidden') && suggestions.length === 0) { setTimeout(() => toggleSelectTitleDropdown(false), 1500); } else if (suggestions.length > 0) { selectTitleDropdown.classList.remove('hidden'); } });
+        
+        // --- NUEVO (para iniciar sesión al presionar Enter en subtítulo) ---
+        sessionSubtitleInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                startSession();
+            }
+        });
+
+        newGroupInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') addNewGroup(e.target.value); });
+        groupsContainer.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.classList.contains('new-title-in-group')) { addNewTitleToGroup(e.target.dataset.groupName, e.target.value); e.target.value = ''; } });
+        cancelDeleteBtn.addEventListener('click', (e) => { e.stopPropagation(); closeConfirmDelete(); });
+        confirmDeleteBtn.addEventListener('click', (e) => { e.stopPropagation(); confirmDelete(); });
+        cancelStopBtn.addEventListener('click', closeStopSession);
+        confirmStopBtn.addEventListener('click', () => { closeStopSession(); resetSession(); });
+        
+        manualFinishBtn.addEventListener('click', () => {
+            if (!manualFinishBtn.disabled) {
+                finishSession();
+            }
+        });
+        
+        closeNotepadBtn.addEventListener('click', closeNotepad); 
+        
+        notepadTextarea.addEventListener('input', () => {
+             localStorage.setItem('flowtimeNotepadContent', notepadTextarea.value);
+        });
+        
+        
+        document.addEventListener('keydown', (event) => {
+            const activeEl = document.activeElement;
+            const isTyping = activeEl.tagName === 'INPUT' || activeEl.tagName === 'SELECT' || activeEl.tagName === 'TEXTAREA';
+            
+            if (event.key === 'Escape') {
+                if (!notepadOverlay.classList.contains('hidden')) {
+                    closeNotepad();
+                } else if (!tutorialOverlay.classList.contains('hidden')) {
+                    endTutorial();
+                } else if (!statsOverlay.classList.contains('hidden')) {
+                    toggleStatsModal(false);
+                } else if (!historySidebar.classList.contains('translate-x-full')) {
+                    toggleHistorySidebar(false);
+                } else if (!confirmDeleteOverlay.classList.contains('hidden')) {
+                    closeConfirmDelete();
+                } else if (!confirmStopOverlay.classList.contains('hidden')) {
+                    closeStopSession();
+                } else if (!manageGroupsModal.classList.contains('hidden')) {
+                    toggleManageGroupsModal(false);
+                } else if (!sessionScreen.classList.contains('hidden')) {
+                    if (isSessionFinished) { resetSession() } else { promptStopSession() }
+                } else {
+                    closePopovers();
+                }
+                return; 
+            }
+            
+            if (!tutorialOverlay.classList.contains('hidden')) {
+                if (event.key === 'ArrowRight' && currentTutorialStep < tutorialSteps.length - 1) tutorialNextBtn.click();
+                if (event.key === 'ArrowLeft' && currentTutorialStep > 0) tutorialPrevBtn.click();
+                return;
+            }
+            
+            if (event.altKey && event.key.toLowerCase() === 's') {
+                event.preventDefault();
+                toggleNotepad();
+                return;
+            }
+            
+            if (!sessionScreen.classList.contains('hidden')) {
+                if (event.code === 'Space' && !isTyping) { 
+                    event.preventDefault();
+                    toggleRest();
+                }
+            }
+            
+            if (isTyping) return; 
+            
+            if (event.key.toLowerCase() === 'h') {
+                event.preventDefault();
+                startTutorial();
+            }
+            if (event.key.toLowerCase() === 'g') {
+                event.preventDefault();
+                toggleStatsModal();
+            }
+            if (!configScreen.classList.contains('hidden') && !confirmDeleteOverlay.classList.contains('hidden')) {
+                if (event.code === 'Enter') confirmDelete();
+            }
+        });
+    </script>
+</body>
+</html>

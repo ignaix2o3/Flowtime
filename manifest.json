@@ -1,0 +1,21 @@
+{
+  "name": "Flowtime Timer",
+  "short_name": "Flowtime",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#0ea5e9",
+  "description": "Tu temporizador Flowtime personal.",
+  "icons": [
+    {
+      "src": "https://www.google.com/s2/favicons?domain=google.com&sz=192",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://www.google.com/s2/favicons?domain=google.com&sz=512",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
