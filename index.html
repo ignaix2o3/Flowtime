@@ -1156,103 +1156,11 @@
             }
         });
         
-        closeNotepadBtn.addEventListener('click', closeNotepad); 
-        
-        notepadTextarea.addEventListener('input', () => {
+                notepadTextarea.addEventListener('input', () => {
              localStorage.setItem('flowtimeNotepadContent', notepadTextarea.value);
         });
 
-        // --- FUNCIONES DE LA NUBE ---
-        function showCloudStatus(msg, type = 'info') {
-            cloudStatusMsg.textContent = msg;
-            cloudStatusMsg.className = 'text-xs text-center mt-2 h-4 ' + (type === 'error' ? 'text-red-400' : 'text-emerald-400');
-            setTimeout(() => { cloudStatusMsg.textContent = ''; }, 3000);
-        }
-
-        async function cloudSync(action) {
-            const apiKey = localStorage.getItem('flowtime_apiKey');
-            const binId = localStorage.getItem('flowtime_binId');
-
-            if (!apiKey || !binId) {
-                alert("Primero configura tus llaves de JSONBin (Click en 'Configurar')");
-                document.getElementById('cloud-settings-area').classList.remove('hidden');
-                return;
-            }
-
-            const url = `https://api.jsonbin.io/v3/b/${binId}`;
-            
-            try {
-                showCloudStatus(action === 'upload' ? 'Subiendo...' : 'Bajando...', 'info');
-                
-                if (action === 'upload') {
-                    // SUBIR DATOS
-                    const dataToSave = {
-                        sessionHistory, titleGroups, attendanceData, isAttendanceLocked, 
-                        timestamp: new Date().toISOString()
-                    };
-                    
-                    const response = await fetch(url, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Master-Key': apiKey
-                        },
-                        body: JSON.stringify(dataToSave)
-                    });
-
-                    if (response.ok) {
-                        showCloudStatus('¡Guardado en la nube!', 'success');
-                    } else {
-                        throw new Error('Error al subir');
-                    }
-
-                } else {
-                    // BAJAR DATOS
-                    const response = await fetch(url, {
-                        method: 'GET',
-                        headers: { 'X-Master-Key': apiKey }
-                    });
-
-                    if (response.ok) {
-                        const result = await response.json();
-                        const data = result.record;
-                        
-                        if (data.sessionHistory) {
-                            sessionHistory = data.sessionHistory;
-                            titleGroups = data.titleGroups;
-                            attendanceData = data.attendanceData || {};
-                            isAttendanceLocked = data.isAttendanceLocked || false;
-                            
-                            saveData(); 
-                            renderHistory();
-                            updateSelectedGroupDisplay(); 
-                            showCloudStatus('¡Datos actualizados!', 'success');
-                        }
-                    } else {
-                        throw new Error('Error al bajar');
-                    }
-                }
-            } catch (error) {
-                console.error(error);
-                showCloudStatus('Error de conexión', 'error');
-            }
-        }
-
-        toggleCloudSettingsBtn.addEventListener('click', () => {
-            const area = document.getElementById('cloud-settings-area');
-            area.classList.toggle('hidden');
-            if (!area.classList.contains('hidden')) {
-                cloudApiKeyInput.value = localStorage.getItem('flowtime_apiKey') || '';
-                cloudBinIdInput.value = localStorage.getItem('flowtime_binId') || '';
-            }
-        });
-
-        document.getElementById('save-cloud-config-btn').addEventListener('click', () => {
-            const key = cloudApiKeyInput.value.trim();
-            const bin = cloudBinIdInput.value.trim();
-            if (key && bin) {
-                localStorage.setItem('flowtime_apiKey', key);
-            // --- FUNCIONES DE LA NUBE ---
+        // --- FUNCIONES DE LA NUBE (SINCRONIZACIÓN INTELIGENTE) ---
         
         function showCloudStatus(msg, type = 'info') {
             cloudStatusMsg.textContent = msg;
@@ -1387,7 +1295,6 @@
 
         document.getElementById('cloud-upload-btn').addEventListener('click', () => cloudSync('upload'));
         document.getElementById('cloud-download-btn').addEventListener('click', () => cloudSync('download'));
-      
         
         
         document.addEventListener('keydown', (event) => {
@@ -1450,6 +1357,6 @@
                 if (event.code === 'Enter') confirmDelete();
             }
         });
-    </script>
+
 </body>
 </html>
