@@ -9,6 +9,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
     <style>
         body { font-family: 'Inter', sans-serif; }
         .circular-progress { background: radial-gradient(closest-side, #111827 89%, transparent 90% 100%), conic-gradient(var(--progress-color, #38bdf8) var(--progress, 0%), #374151 0); }
@@ -21,24 +26,11 @@
         .drop-zone { border: 2px dashed #4b5563; }
         .attendance-circle-container { opacity: 0.7; }
         .attendance-circle-container.weekday { opacity: 1.0; }
-        #manual-entry-form { transition: all 0.3s ease-in-out; max-height: 0; overflow: hidden; }
-        #manual-entry-form.expanded { max-height: 300px; }
         #tutorial-overlay { transition: opacity 0.3s ease-in-out; }
         #tutorial-spotlight { position: absolute; border-radius: 8px; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7); transition: all 0.4s ease-in-out; pointer-events: none; }
         #tutorial-modal { transition: all 0.4s ease-in-out; transform: translateY(10px); opacity: 0; }
         #tutorial-modal.visible { transform: translateY(0); opacity: 1; }
     </style>
-    <link rel="manifest" href="manifest.json">
-    <link rel="manifest" href="manifest.json">.    <link rel="manifest" href="manifest.json">
-    <link rel="manifest" href="manifest.json">
-    <link rel="manifest" href="manifest.json">
-    <link rel="manifest" href="manifest.json">
-    <link rel="manifest" href="manifest.json">
-    <link rel="manifest" href="manifest.json">
-    <link rel="manifest" href="manifest.json">
-    <link rel="manifest" href="manifest.json">
-    <link rel="manifest" href="manifest.json">
-    <link rel="manifest" href="manifest.json">
     <link rel="manifest" href="manifest.json">
 </head>
 <body class="bg-gray-900 text-white flex items-center justify-center min-h-screen antialiased overflow-y-auto">
@@ -56,45 +48,6 @@
                 <button id="add-manual-entry-toggle-btn" class="p-1 text-gray-400 hover:text-white" title="Añadir Entrada Manual">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 </button>
-            </div>
-            
-            <div id="manual-entry-form" class="mb-4">
-                <div class="bg-gray-700/50 p-3 rounded-lg space-y-3 text-sm">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-300 mb-1">Tarea</label>
-                        <select id="manual-title-select" class="w-full bg-gray-600 border border-gray-500 rounded p-1.5"></select>
-                    </div>
-            
-                    <div>
-                        <label class="block text-xs font-medium text-gray-300 mb-1">Subtítulo <span class="text-gray-500">(Opcional)</span></label>
-                        <input type="text" id="manual-subtitle-input" class="w-full bg-gray-600 border border-gray-500 rounded p-1.5" placeholder="Ej: Certamen 2">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-300 mb-1">Fecha</label>
-                        <input type="date" id="manual-date-input" class="w-full bg-gray-600 border border-gray-500 rounded p-1.5">
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block text-xs font-medium text-gray-300 mb-1">Inicio</label>
-                            <input type="time" id="manual-start-time-input" class="w-full bg-gray-600 border border-gray-500 rounded p-1.5">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-300 mb-1">Fin</label>
-                            <input type="time" id="manual-end-time-input" class="w-full bg-gray-600 border border-gray-500 rounded p-1.5">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-300 mb-1">Tipo</label>
-                        <select id="manual-task-type-select" class="w-full bg-gray-600 border border-gray-500 rounded p-1.5">
-                            <option value="primary">Teoría</option>
-                            <option value="secondary">Práctica</option>
-                        </select>
-                    </div>
-                    <div class="flex justify-end gap-2 pt-2">
-                        <button id="cancel-manual-entry-btn" class="px-3 py-1 bg-gray-600 hover:bg-gray-500 rounded text-xs">Cancelar</button>
-                        <button id="save-manual-entry-btn" class="px-3 py-1 bg-sky-600 hover:bg-sky-500 rounded text-xs">Guardar</button>
-                    </div>
-                </div>
             </div>
             <div id="history-list" class="flex-grow overflow-y-auto pr-2" style="max-height: 70%;"></div>
             <div class="mt-auto pt-4 border-t border-gray-700">
@@ -134,8 +87,7 @@
             </div>
         </div>
         
-                <div id="config-screen" class="flex flex-col items-center justify-center w-full py-10 md:h-full md:py-0">
-
+        <div id="config-screen" class="flex flex-col items-center justify-center w-full py-10 md:h-full md:py-0">
             <h1 class="text-4xl md:text-5xl font-bold text-sky-400 mb-8">Flowtime</h1>
             
             <div id="config-box" class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-sm">
@@ -161,6 +113,7 @@
                     <label class="block mb-2 text-sm font-medium text-gray-300">Subtítulo <span class="text-gray-500">(Opcional, ej: "Certamen 2")</span></label>
                     <input type="text" id="session-subtitle-input" class="bg-gray-700 border border-gray-600 text-white text-base rounded-lg focus:ring-sky-500 focus:border-sky-500 block w-full p-2.5 text-center" placeholder="Añade un apodo..." autocomplete="off">
                 </div>
+            
                 <div id="time-inputs-container" class="mb-8">
                     <div class="mb-6">
                         <label class="block mb-2 text-sm font-medium text-gray-300">Tiempo de Trabajo</label>
@@ -184,7 +137,7 @@
                     </div>
                 </div>
 
-                <div class="mb-6 border-t border-gray-700 pt-4">
+<div class="mb-6 border-t border-gray-700 pt-4">
                     <div class="flex justify-between items-center mb-2">
                         <label class="text-sm font-medium text-sky-400">Sincronización Nube</label>
                         <button id="toggle-cloud-settings" class="text-xs text-gray-500 hover:text-white underline">Configurar</button>
@@ -194,6 +147,11 @@
                         <input type="text" id="cloud-api-key" class="w-full bg-gray-700 border border-gray-600 text-xs text-white rounded p-2" placeholder="Pegar X-Master-Key aquí">
                         <input type="text" id="cloud-bin-id" class="w-full bg-gray-700 border border-gray-600 text-xs text-white rounded p-2" placeholder="Pegar Bin ID aquí">
                         <button id="save-cloud-config-btn" class="w-full bg-gray-600 hover:bg-gray-500 text-xs py-1 rounded">Guardar Llaves</button>
+                    </div>
+
+                    <div class="flex items-center mb-3">
+                        <input id="cloud-force-overwrite" type="checkbox" class="w-4 h-4 text-sky-600 bg-gray-700 border-gray-600 rounded focus:ring-sky-600 ring-offset-gray-800">
+                        <label for="cloud-force-overwrite" class="ml-2 text-xs font-medium text-gray-400 select-none cursor-pointer" title="Marca esto si borraste datos y quieres que la nube se actualice.">Sobreescribir Nube (Usar al borrar)</label>
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
@@ -213,6 +171,7 @@
                     Iniciar Sesión
                 </button>
             </div>
+            
             <p class="text-gray-500 mt-8 text-center text-sm">Define tu bloque de trabajo y tu presupuesto de descanso para empezar.</p>
             <p class="text-gray-500 mt-4 text-center text-xs">Tip: Para los minutos, usa <kbd class="px-2 py-1.5 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-lg">Ctrl</kbd> + Rueda del mouse para ajustar de 1 en 1.</p>
         </div>
@@ -246,9 +205,55 @@
                 </div>
             </div>
         </div>
+
+        <div id="manual-entry-overlay" class="fixed inset-0 bg-black/70 z-50 hidden items-center justify-center p-4">
+            <div id="manual-entry-form" class="bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-sky-400">Añadir Entrada Manual</h3>
+                    <button id="close-manual-entry-btn" class="p-1 text-gray-400 hover:text-white" title="Cerrar">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+                <div class="space-y-3 text-sm">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1">Tarea</label>
+                        <select id="manual-title-select" class="w-full bg-gray-700 border border-gray-600 rounded p-1.5"></select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1">Subtítulo <span class="text-gray-500">(Opcional)</span></label>
+                        <input type="text" id="manual-subtitle-input" class="w-full bg-gray-700 border border-gray-600 rounded p-1.5" placeholder="Ej: Certamen 2">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1">Fecha</label>
+                        <input type="date" id="manual-date-input" class="w-full bg-gray-700 border border-gray-600 rounded p-1.5">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-300 mb-1">Inicio</label>
+                            <input type="text" id="manual-start-time-input" class="w-full bg-gray-700 border border-gray-600 rounded p-1.5" placeholder="HH:MM">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-300 mb-1">Fin</label>
+                            <input type="text" id="manual-end-time-input" class="w-full bg-gray-700 border border-gray-600 rounded p-1.5" placeholder="HH:MM">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1">Tipo</label>
+                        <select id="manual-task-type-select" class="w-full bg-gray-700 border border-gray-600 rounded p-1.5">
+                            <option value="primary">Teoría</option>
+                            <option value="secondary">Práctica</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end gap-2 pt-2">
+                        <button id="cancel-manual-entry-btn" class="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-xs">Cancelar</button>
+                        <button id="save-manual-entry-btn" class="px-4 py-2 bg-sky-600 hover:bg-sky-500 rounded-lg text-xs">Guardar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         
-        <div id="session-screen" class="hidden h-full w-full grid grid-cols-4 grid-rows-[auto_1fr_auto] gap-4">
-            <div id="work-monitor" class="col-span-4 row-start-1 p-4 md:p-6 bg-gray-800 rounded-2xl flex items-center gap-4">
+        <div id="session-screen" class="hidden h-full w-full grid grid-cols-1 grid-rows-[auto_1fr_auto] gap-4 justify-items-center">
+            <div id="work-monitor" class="row-start-1 p-4 md:p-6 bg-gray-800 rounded-2xl flex items-center gap-4">
                 <div class="flex items-baseline gap-2 whitespace-nowrap">
                     <h2 class="text-sm md:text-base font-semibold text-gray-400">TIEMPO DE TRABAJO:</h2>
                     <span id="work-session-title" class="text-base font-bold text-sky-400"></span>
@@ -260,7 +265,7 @@
                 <span id="work-progress-percentage" class="text-base font-mono text-gray-400 w-12 text-right">0%</span>
             </div>
             
-            <div id="rest-timer" class="col-start-1 md:col-start-2 col-span-4 md:col-span-2 row-start-2 p-6 flex flex-col items-center justify-center gap-6">
+            <div id="rest-timer" class="row-start-2 p-6 flex flex-col items-center justify-center gap-6 justify-self-center">
                 <div class="text-center"><span id="finish-time-display" class="text-lg font-medium text-gray-400"></span></div>
                 <div id="circular-progress-bar" class="circular-progress w-48 h-48 md:w-64 md:h-64 rounded-full flex items-center justify-center" style="--progress: 100%;">
                     <span id="rest-time-display" class="text-5xl md:text-6xl font-bold font-mono">10:00</span>
@@ -277,18 +282,21 @@
                     </button>
                 </div>
                 <div class="h-6 text-center">
-            <span class="text-sm text-gray-400">Modo actual: </span><span id="current-task-type-indicator" class="text-sm font-semibold text-white">Teoría</span>
-        </div>
+                    <span class="text-sm text-gray-400">Modo actual: </span>
+                    <span id="current-task-type-indicator" class="text-sm font-semibold text-white">Teoría</span>
+                </div>
 
-        <div class="h-10 mt-2"> <button id="manual-finish-btn" class="px-6 py-2 bg-sky-700/80 hover:bg-sky-600 rounded-full text-base font-medium transition-colors duration-300 flex items-center gap-2 opacity-50 cursor-not-allowed" disabled title="Se activará si entras en tiempo extra">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                Finalizar Ahora
-            </button>
-        </div>
+                <div class="h-10 mt-2"> 
+                    <button id="manual-finish-btn" class="px-6 py-2 bg-sky-700/80 hover:bg-sky-600 rounded-full text-base font-medium transition-colors duration-300 flex items-center gap-2 opacity-50 cursor-not-allowed" disabled title="Se activará si entras en tiempo extra">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        Finalizar Ahora
+                    </button>
+                </div>
+
                 <div class="text-center"><span id="rest-used-display" class="text-base font-medium text-gray-400"></span></div>
             </div>
             
-            <div class="col-start-1 row-start-3 flex items-center justify-center">
+            <div class="row-start-3 flex items-center justify-center">
                 <button id="reset-btn" class="px-6 py-3 bg-red-800/80 hover:bg-red-700 rounded-full text-base font-medium transition-colors duration-300 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
                     Detener
@@ -330,7 +338,7 @@
         const sessionScreen = document.getElementById('session-screen');
         const startBtn = document.getElementById('start-btn');
         const sessionTitleInput = document.getElementById('session-title-input');
-        const sessionSubtitleInput = document.getElementById('session-subtitle-input'); // <-- NUEVO
+        const sessionSubtitleInput = document.getElementById('session-subtitle-input'); 
         const workHoursInput = document.getElementById('work-hours-input');
         const workMinutesInput = document.getElementById('work-minutes-input');
         const workSecondsInput = document.getElementById('work-seconds-input');
@@ -357,7 +365,7 @@
         const addManualEntryToggleBtn = document.getElementById('add-manual-entry-toggle-btn');
         const manualEntryForm = document.getElementById('manual-entry-form');
         const manualTitleSelect = document.getElementById('manual-title-select');
-        const manualSubtitleInput = document.getElementById('manual-subtitle-input'); // <-- NUEVO
+        const manualSubtitleInput = document.getElementById('manual-subtitle-input'); 
         const manualDateInput = document.getElementById('manual-date-input');
         const manualStartTimeInput = document.getElementById('manual-start-time-input');
         const manualEndTimeInput = document.getElementById('manual-end-time-input');
@@ -395,6 +403,8 @@
         const attendanceCirclesContainer = document.getElementById('attendance-circles');
         const attendanceLockBtn = document.getElementById('attendance-lock-btn');
         const manualFinishBtn = document.getElementById('manual-finish-btn');
+        const manualEntryOverlay = document.getElementById('manual-entry-overlay');
+        
         // Cloud Variables
         const cloudApiKeyInput = document.getElementById('cloud-api-key');
         const cloudBinIdInput = document.getElementById('cloud-bin-id');
@@ -416,7 +426,7 @@
         const notepadTimerDisplay = document.getElementById('notepad-timer-display');
         const closeNotepadBtn = document.getElementById('close-notepad-btn');
         
-        let timerWorker, mainInterval, sessionTitle = '', sessionGroup = '', sessionSubtitle = '', workTimeGoal = 0, workTimeElapsed = 0, restBudgetTotal = 0; // <-- NUEVO sessionSubtitle
+        let timerWorker, mainInterval, sessionTitle = '', sessionGroup = '', sessionSubtitle = '', workTimeGoal = 0, workTimeElapsed = 0, restBudgetTotal = 0; 
         let restBudgetRemaining = 0, isResting = false, isSessionFinished = false, isSessionPrimary = true, sessionHistory = [];
         let isInExtraTime = false;
         let titleGroups = [], deletePayload = null, currentSelectedGroup = 'ESTUDIOS', expandedGroupsInManager = [], sessionStartTime;
@@ -445,7 +455,7 @@
             workProgressBar.style.backgroundColor=activeColor;
             document.documentElement.style.setProperty('--progress-color',activeColor);
             
-            // 1. Actualizar los NÚMEROS siempre (esto mostrará el conteo regresivo)
+            // 1. Actualizar los NÚMEROS siempre
             if(restBudgetRemaining>=3600){
                 const h=Math.floor(restBudgetRemaining/3600);
                 const m=Math.floor((restBudgetRemaining%3600)/60);
@@ -459,12 +469,10 @@
             }
             
             // 2. Actualizar el CÍRCULO condicionalmente
-            // Solo gasta el círculo si estamos descansando O si no estamos en tiempo extra.
             if (isResting || !isInExtraTime) {
                 const restProgressPercent=restBudgetTotal>0?(restBudgetRemaining/restBudgetTotal)*100:0;
                 circularProgressBar.style.setProperty('--progress',`${restProgressPercent}%`);
             }
-            // Si estamos en tiempo extra (isInExtraTime es true) Y no estamos descansando (isResting es false), el círculo no se actualiza, quedando "congelado".
             
             if(!isSessionFinished){
                 const restTimeUsed=restBudgetTotal-restBudgetRemaining;
@@ -487,66 +495,54 @@
                         playIcon.classList.remove('hidden');
                         pauseIcon.classList.add('hidden');
                         
-                        // Si el presupuesto se acaba DURANTE el tiempo extra, la sesión termina.
                         if (isInExtraTime) {
                             finishSession();
                         }
                     }
                 }
             } else {
-                // No estamos descansando, estamos trabajando
+                // Trabajando
                 workTimeElapsed++;
                 
-                // --- LÓGICA DE TIEMPO EXTRA ---
+                // LÓGICA DE TIEMPO EXTRA
                 if (isInExtraTime && restBudgetRemaining > 0) {
-                    // Estamos en tiempo extra, consumir presupuesto para "comprar" más tiempo de trabajo
                     restBudgetRemaining--;
-                    workTimeGoal++; // Extender el objetivo
+                    workTimeGoal++; 
                 }
-                // --- FIN LÓGICA TIEMPO EXTRA ---
             }
 
-            // --- LÓGICA DE FINALIZACIÓN (MODIFICADA) ---
             if(workTimeElapsed >= workTimeGoal) {
                 if (!isInExtraTime && restBudgetRemaining > 0) {
-                    // Objetivo de trabajo original alcanzado Y HAY presupuesto
-                    // ==> Iniciar Modo "Tiempo Extra"
+                    // Entrar en Tiempo Extra
                     isInExtraTime = true;
-                    playNotification(); // Notificar que se alcanzó el objetivo original
-                    
-                    // Activar el botón de finalizar manualmente
+                    playNotification(); 
                     manualFinishBtn.disabled = false;
                     manualFinishBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                     manualFinishBtn.title = 'Finalizar la sesión y guardar';
-                    
-                    // Actualizar UI para mostrar que estamos en tiempo extra
                     finishTimeDisplay.textContent = "¡Tiempo Extra! (Usando presupuesto)";
                     
                 } else if (isInExtraTime && restBudgetRemaining <= 0) {
-                    // Estamos en tiempo extra pero el presupuesto se agotó (ya sea trabajando o descansando)
-                    // ==> Finalizar Sesión
+                    // Se acabó presupuesto en tiempo extra
                     finishSession();
                     
                 } else if (restBudgetRemaining <= 0) {
-                    // Objetivo de trabajo alcanzado y NO hay presupuesto (o se agotó)
-                    // ==> Finalizar Sesión
+                    // Se acabó tiempo normal y no hay presupuesto
                     finishSession();
                 }
-                // Si isInExtraTime y restBudgetRemaining > 0, no hacer nada (la sesión continúa)
             }
-            // --- FIN LÓGICA DE FINALIZACIÓN ---
             
             updateUI();
         }
         function updateTaskTypeUI(){const primaryText='Teoría';const secondaryText='Práctica';if(isSessionPrimary){taskTypeBtnText.textContent=secondaryText;taskTypeToggleBtn.title=`Cambiar a tiempo de ${secondaryText}`;currentTaskTypeIndicator.textContent=primaryText}else{taskTypeBtnText.textContent=primaryText;taskTypeToggleBtn.title=`Cambiar a tiempo de ${primaryText}`;currentTaskTypeIndicator.textContent=secondaryText}}
         function toggleTaskType(){isSessionPrimary=!isSessionPrimary;updateTaskTypeUI()}
         function toggleRest(){if(isSessionFinished||(!isResting&&restBudgetRemaining<=0))return;isResting=!isResting;restBtnText.textContent=isResting?"Pausar":"Descansar";playIcon.classList.toggle('hidden',isResting);pauseIcon.classList.toggle('hidden',!isResting);updateUI()}
+        
         function finishSession(){
             if(timerWorker)timerWorker.postMessage('stop');
             if(mainInterval)clearInterval(mainInterval);
             isSessionFinished=true;
             isResting=false;
-            isInExtraTime = false; // <-- AÑADIDO
+            isInExtraTime = false; 
             playNotification();
             if(workTimeElapsed>workTimeGoal){workTimeElapsed=workTimeGoal}
             saveSessionToHistory();
@@ -560,12 +556,17 @@
             taskTypeToggleBtn.disabled=true;
             taskTypeToggleBtn.classList.add('opacity-50','cursor-not-allowed');
             
-            // Desactivar y resetear el botón de finalizar
-            manualFinishBtn.disabled = true; // <-- AÑADIDO
-            manualFinishBtn.classList.add('opacity-50', 'cursor-not-allowed'); // <-- AÑADIDO
-            manualFinishBtn.title = 'Se activará si entras en tiempo extra'; // <-- AÑADIDO
+            manualFinishBtn.disabled = true; 
+            manualFinishBtn.classList.add('opacity-50', 'cursor-not-allowed'); 
+            manualFinishBtn.title = 'Se activará si entras en tiempo extra'; 
         }
-        function startSession(){
+        
+        let wakeLock = null;
+        async function startSession(){
+            if ('wakeLock' in navigator) {
+                try { wakeLock = await navigator.wakeLock.request('screen'); } catch (err) { console.log(err); }
+            }
+
             const enteredTitle=sessionTitleInput.value.trim().toUpperCase();
             if(!enteredTitle){alert("Por favor, escribe o selecciona un título para la sesión.");return}
             const group=titleGroups.find(g=>g.name===currentSelectedGroup);
@@ -585,7 +586,7 @@
             if(totalRestSeconds<0){alert("Por favor, ingresa un presupuesto de descanso válido.");return}
             
             isSessionPrimary = true;
-            isInExtraTime = false; // <-- AÑADIDO
+            isInExtraTime = false; 
             sessionStartTime=new Date();
             workTimeGoal=totalWorkSeconds;
             workTimeElapsed=0;
@@ -617,10 +618,9 @@
             restToggleBtn.disabled=false;
             restToggleBtn.classList.remove('opacity-50','cursor-not-allowed');
             
-            // Reiniciar estado del botón de finalizar
-            manualFinishBtn.disabled = true; // <-- AÑADIDO
-            manualFinishBtn.classList.add('opacity-50', 'cursor-not-allowed'); // <-- AÑADIDO
-            manualFinishBtn.title = 'Se activará si entras en tiempo extra'; // <-- AÑADIDO
+            manualFinishBtn.disabled = true; 
+            manualFinishBtn.classList.add('opacity-50', 'cursor-not-allowed'); 
+            manualFinishBtn.title = 'Se activará si entras en tiempo extra'; 
 
             updateUI();
             try{
@@ -647,6 +647,9 @@
             }
         }
         function resetSession(){
+            if (wakeLock !== null) {
+                wakeLock.release().then(() => { wakeLock = null; });
+            }
             if(timerWorker)timerWorker.postMessage('stop');
             if(mainInterval)clearInterval(mainInterval);
             sessionScreen.classList.add('hidden');
@@ -655,12 +658,11 @@
             toggleHistorySidebar(false);
             toggleStatsModal(false);
             sessionSubtitleInput.value = ''; 
-            isInExtraTime = false; // <-- AÑADIDO
+            isInExtraTime = false; 
             
-            // Reiniciar estado del botón de finalizar
-            manualFinishBtn.disabled = true; // <-- AÑADIDO
-            manualFinishBtn.classList.add('opacity-50', 'cursor-not-allowed'); // <-- AÑADIDO
-            manualFinishBtn.title = 'Se activará si entras en tiempo extra'; // <-- AÑADIDO
+            manualFinishBtn.disabled = true; 
+            manualFinishBtn.classList.add('opacity-50', 'cursor-not-allowed'); 
+            manualFinishBtn.title = 'Se activará si entras en tiempo extra'; 
         }
         function promptStopSession(){confirmStopOverlay.classList.remove('hidden');confirmStopOverlay.classList.add('flex')}
         function closeStopSession(){confirmStopOverlay.classList.add('hidden');confirmStopOverlay.classList.remove('flex')}
@@ -676,7 +678,9 @@
             if(data){
             sessionHistory=(data.sessionHistory||[]).map(s=>({...s,workTimePrimary:s.workTimePrimary!==undefined?s.workTimePrimary:(s.workTime||0),workTimeSecondary:s.workTimeSecondary!==undefined?s.workTimeSecondary:0, subtitle: s.subtitle || ''}));
             titleGroups=(data.titleGroups||[]).map(group=>({...group,titles:group.titles.map(title=>typeof title==='string'?{name:title,color:defaultColor.hex}:title)}));attendanceData=data.attendanceData||{};isAttendanceLocked=data.isAttendanceLocked||false}if(!titleGroups.some(g=>g.name==='ESTUDIOS')){titleGroups.unshift({name:'ESTUDIOS',titles:[]})}if(!titleGroups.some(g=>g.name==='SIN GRUPO')){titleGroups.push({name:'SIN GRUPO',titles:[]})}}
-        function toggleHistorySidebar(show){const shouldShow=show===true||(show!==false&&historySidebar.classList.contains('translate-x-full'));if(shouldShow){historySidebar.classList.remove('translate-x-full');sidebarOverlay.classList.remove('hidden');populateManualTitleSelect();manualEntryForm.classList.remove('expanded');addManualEntryToggleBtn.classList.remove('rotate-45','text-sky-400')}else{historySidebar.classList.add('translate-x-full');sidebarOverlay.classList.add('hidden')}}
+        
+        function toggleHistorySidebar(show){const shouldShow=show===true||(show!==false&&historySidebar.classList.contains('translate-x-full'));if(shouldShow){historySidebar.classList.remove('translate-x-full');sidebarOverlay.classList.remove('hidden');populateManualTitleSelect();}else{historySidebar.classList.add('translate-x-full');sidebarOverlay.classList.add('hidden')}}
+        
         function renderHistory(){historyList.innerHTML='';const groupedByDate={};const today=(new Date()).toLocaleDateString('sv-SE');const yesterday=(new Date(Date.now()-86400000)).toLocaleDateString('sv-SE');sessionHistory.forEach((session,index)=>{const sessionDateStr=(new Date(session.endTime)).toLocaleDateString('sv-SE');if(!groupedByDate[sessionDateStr])groupedByDate[sessionDateStr]=[];groupedByDate[sessionDateStr].push({...session,originalIndex:index})});if(Object.keys(groupedByDate).length===0){historyList.innerHTML=`<p class="text-gray-500 text-center mt-4">No hay sesiones guardadas.</p>`;return}Object.keys(groupedByDate).sort().reverse().forEach(dateStr=>{const dateGroupContainer=document.createElement('div');dateGroupContainer.className='mb-4';let dateLabel=(new Date(dateStr)).toLocaleDateString('es-ES',{day:'2-digit',month:'long'});if(dateStr===today)dateLabel='Hoy';if(dateStr===yesterday)dateLabel='Ayer';const dateHeader=document.createElement('button');dateHeader.className='flex items-center justify-between w-full text-left text-sky-400 font-semibold mb-2';dateHeader.innerHTML=`<span>${dateLabel}</span><svg class="arrow-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>`;const dateContent=document.createElement('div');const groupedByTask={};groupedByDate[dateStr].forEach(session=>{const taskKey=`${session.group}|||${session.title}`;if(!groupedByTask[taskKey]){groupedByTask[taskKey]={totalPrimary:0,totalSecondary:0,sessions:[],title:session.title,group:session.group}}groupedByTask[taskKey].totalPrimary+=session.workTimePrimary||0;groupedByTask[taskKey].totalSecondary+=session.workTimeSecondary||0;groupedByTask[taskKey].sessions.push(session)});for(const taskKey in groupedByTask){const task=groupedByTask[taskKey];const totalTime=task.totalPrimary+task.totalSecondary;const taskContainer=document.createElement('div');taskContainer.className='pl-2 border-l-2 border-gray-700 mb-2';const taskHeader=document.createElement('button');taskHeader.className='flex items-center justify-between w-full text-left bg-gray-700 p-3 rounded-lg';taskHeader.innerHTML=`
                         <div class="flex flex-col">
                            <span class="text-white font-semibold">${formatHistoryTime(totalTime)} - ${task.title.toUpperCase()}</span>
@@ -685,7 +689,6 @@
                         <svg class="arrow-icon w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     `;const taskDetails=document.createElement('div');taskDetails.className='hidden pl-4 pt-2 text-sm text-gray-400 space-y-1';task.sessions.sort((a,b)=>new Date(a.startTime)-new Date(b.startTime)).forEach(session=>{const detailEl=document.createElement('div');detailEl.className="flex items-center justify-between group";const sessionType=(session.workTimePrimary||0)>0?'Teoría':'Práctica';
                         
-                        // --- MODIFICADO (para mostrar subtítulo) ---
                         const subtitleHTML = session.subtitle ? `<span class="block text-gray-500 text-xs">- ${session.subtitle}</span>` : '';
                         detailEl.innerHTML = `
                             <div class="flex-grow">
@@ -696,41 +699,38 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                             </button>
                         `;
-                        // --- FIN MODIFICADO ---
 
                         detailEl.querySelector('button').onclick=(e)=>{e.stopPropagation();promptDelete({type:'session',index:session.originalIndex,time:formatIntervalTime(session.startTime,session.endTime)})};taskDetails.appendChild(detailEl)});taskHeader.onclick=()=>{taskDetails.classList.toggle('hidden');taskHeader.querySelector('.arrow-icon').classList.toggle('rotate-180')};taskContainer.appendChild(taskHeader);taskContainer.appendChild(taskDetails);dateContent.appendChild(taskContainer)}dateHeader.onclick=()=>{dateContent.classList.toggle('hidden');dateHeader.querySelector('.arrow-icon').classList.toggle('rotate-180')};dateGroupContainer.appendChild(dateHeader);dateGroupContainer.appendChild(dateContent);historyList.appendChild(dateGroupContainer)})}
-        function saveSessionToHistory(){const sessionEndTime=new Date();
-            // --- MODIFICADO (para guardar subtítulo) ---
-            const sessionData={
-                title:sessionTitle,
-                group:sessionGroup,
-                subtitle: sessionSubtitle, // <-- NUEVO
-                workTimePrimary:isSessionPrimary?workTimeElapsed:0,
-                workTimeSecondary:!isSessionPrimary?workTimeElapsed:0,
-                startTime:sessionStartTime.toISOString(),
-                endTime:sessionEndTime.toISOString()
-            };
-            // --- FIN MODIFICADO ---
-            sessionHistory.unshift(sessionData);saveData();renderHistory()}
-        function toggleManualEntryForm(){manualEntryForm.classList.toggle('expanded');addManualEntryToggleBtn.classList.toggle('rotate-45');addManualEntryToggleBtn.classList.toggle('text-sky-400');if(manualEntryForm.classList.contains('expanded')){manualDateInput.value=(new Date()).toLocaleDateString('sv-SE');
-            manualSubtitleInput.value = ''; // <-- NUEVO
-        }}
+        
+        function toggleManualEntryForm(show) {
+            const shouldShow = show === undefined ? manualEntryOverlay.classList.contains('hidden') : show;
+            if (shouldShow) {
+                populateManualTitleSelect();
+                manualDateInput.value = (new Date()).toLocaleDateString('sv-SE');
+                manualSubtitleInput.value = '';
+                toggleHistorySidebar(false); 
+                manualEntryOverlay.classList.remove('hidden');
+                manualEntryOverlay.classList.add('flex');
+            } else {
+                manualEntryOverlay.classList.add('hidden');
+                manualEntryOverlay.classList.remove('flex');
+            }
+        }
+        
         function populateManualTitleSelect(){manualTitleSelect.innerHTML='';titleGroups.forEach(group=>{if(group.titles.length>0){const optgroup=document.createElement('optgroup');optgroup.label=group.name;group.titles.forEach(title=>{const option=document.createElement('option');option.value=`${group.name}|||${title.name}`;option.textContent=title.name;optgroup.appendChild(option)});manualTitleSelect.appendChild(optgroup)}})}
         function addManualSessionToHistory(){const selectedTitleData=manualTitleSelect.value;
-            const subtitle = manualSubtitleInput.value.trim(); // <-- NUEVO
+            const subtitle = manualSubtitleInput.value.trim(); 
             const date=manualDateInput.value;const startTime=manualStartTimeInput.value;const endTime=manualEndTimeInput.value;const taskType=manualTaskTypeSelect.value;if(!selectedTitleData||!date||!startTime||!endTime){alert("Por favor, completa todos los campos.");return}const[group,title]=selectedTitleData.split('|||');const startDateTime=new Date(`${date}T${startTime}`);const endDateTime=new Date(`${date}T${endTime}`);if(startDateTime>=endDateTime){alert("La hora de fin debe ser posterior a la hora de inicio.");return}const durationInSeconds=(endDateTime-startDateTime)/1000;
             
-            // --- MODIFICADO (para guardar subtítulo) ---
             const sessionData={
                 title:title,
                 group:group,
-                subtitle: subtitle, // <-- NUEVO
+                subtitle: subtitle, 
                 workTimePrimary:taskType==='primary'?durationInSeconds:0,
                 workTimeSecondary:taskType==='secondary'?durationInSeconds:0,
                 startTime:startDateTime.toISOString(),
                 endTime:endDateTime.toISOString()
             };
-            // --- FIN MODIFICADO ---
             sessionHistory.push(sessionData);sessionHistory.sort((a,b)=>new Date(b.endTime)-new Date(a.endTime));saveData();renderHistory();if(!statsOverlay.classList.contains('hidden')){renderStatsChart()}toggleManualEntryForm()}
         
         function openNotepad() {
@@ -1085,7 +1085,15 @@
                 input.addEventListener('input',updateEstimatedFinishTime);
                 input.addEventListener('change',updateEstimatedFinishTime)
             });
-            // La parte de 'onToggleNotepad' se eliminó
+            
+            const timePickerOptions = {
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: "H:i",
+                time_24hr: true,
+            };
+            flatpickr("#manual-start-time-input", timePickerOptions);
+            flatpickr("#manual-end-time-input", timePickerOptions);
         }
         
         const tutorialSteps=[{title:"¡Bienvenido a Flowtime!",content:"Este rápido tutorial te guiará por las funciones principales. Usa los botones para navegar o las flechas del teclado."},{elementId:'session-title-container',title:"1. Define tu Tarea",content:"Aquí escribes o seleccionas el título de tu sesión. Puedes organizar tareas en <strong>grupos</strong> usando el botón de la izquierda.",position:'bottom'},{elementId:'time-inputs-container',title:"2. Establece los Tiempos",content:"Ingresa tu tiempo de <strong>trabajo</strong> y tu <strong>presupuesto de descanso</strong>. <br><strong>Tip:</strong> Usa <kbd class='text-xs bg-gray-700 px-1.5 py-1 rounded'>Ctrl</kbd> + Rueda del mouse para ajustar los minutos.",position:'bottom'},{elementId:'start-btn',title:"3. Inicia la Sesión",content:"Una vez que todo esté listo, presiona este botón para comenzar. ¡A concentrarse!",position:'top'},{title:"Durante la Sesión...",content:"Verás una barra de progreso de trabajo y un temporizador con tu descanso. Podrás pausar el tiempo de descanso o cambiar entre modo <strong>Teoría</strong> y <strong>Práctica</strong>."},{elementId:'history-toggle-btn',title:"4. Revisa tu Progreso",content:"Haz clic aquí para ver tu <strong>historial de sesiones</strong>. También puedes añadir entradas manuales si olvidaste usar el temporizador.",position:'left'},{elementId:'stats-btn',title:"5. Analiza tus Estadísticas",content:"Dentro del historial, encontrarás este botón para abrir un <strong>gráfico detallado</strong> de tu tiempo trabajado por semana y tarea.",position:'top',preAction:()=>{if(historySidebar.classList.contains('translate-x-full')){toggleHistorySidebar(true)}}},{title:"Atajos de Teclado Útiles",content:"<ul class='list-disc list-inside space-y-2'><li><kbd class='bg-gray-700 px-2 py-1 rounded'>Alt</kbd> + <kbd class='bg-gray-700 px-2 py-1 rounded'>A</kbd> - Mostrar/Ocultar app.</li><li><kbd class='bg-gray-700 px-2 py-1 rounded'>Alt</kbd> + <kbd class='bg-gray-700 px-2 py-1 rounded'>S</kbd> - Abrir bloc y activar descanso.</li><li><kbd class='bg-gray-700 px-2 py-1 rounded'>G</kbd> - Abrir/Cerrar Estadísticas.</li><li><kbd class='bg-gray-700 px-2 py-1 rounded'>H</kbd> - Abrir este tutorial.</li><li><kbd class='bg-gray-700 px-2 py-1 rounded'>Espacio</kbd> - Pausar descanso (si no escribes).</li><li><kbd class='bg-gray-700 px-2 py-1 rounded'>Esc</kbd> - Detener sesión / Cerrar ventanas.</li></ul>",preAction:()=>{if(!historySidebar.classList.contains('translate-x-full')){toggleHistorySidebar(false)}}}];
@@ -1114,9 +1122,9 @@
         nextWeekBtn.addEventListener('click', () => { currentDateForStats.setDate(currentDateForStats.getDate() + 7); renderStatsChart(); });
         statsGroupFilter.addEventListener('change', () => { populateTitleFilter(); renderStatsChart(); updateStatsColorButton(); });
         statsTitleFilter.addEventListener('change', () => { renderStatsChart(); updateStatsColorButton(); });
-        addManualEntryToggleBtn.addEventListener('click', toggleManualEntryForm);
+        addManualEntryToggleBtn.addEventListener('click', () => toggleManualEntryForm(true));
         saveManualEntryBtn.addEventListener('click', addManualSessionToHistory);
-        cancelManualEntryBtn.addEventListener('click', toggleManualEntryForm);
+        cancelManualEntryBtn.addEventListener('click', () => toggleManualEntryForm(false));
         attendanceLockBtn.addEventListener('click', toggleAttendanceLock);
         selectGroupBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSelectGroupDropdown(true); });
         selectTitleBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSelectTitleDropdown(true); });
@@ -1135,7 +1143,6 @@
         sessionTitleInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.altKey) { e.preventDefault(); startSession(); } else if (e.key === 'Enter') { e.preventDefault(); const title = sessionTitleInput.value.trim(); if (title) { addNewTitleToGroup(currentSelectedGroup, title, false); sessionTitleInput.value = ''; toggleSelectTitleDropdown(false); updateTitleColorButton(); } } });
         sessionTitleInput.addEventListener('input', () => { updateTitleColorButton(); const query = sessionTitleInput.value.trim().toUpperCase(); if (!query) { toggleSelectTitleDropdown(false); return; } const group = titleGroups.find(g => g.name === currentSelectedGroup); if (!group) return; const suggestions = group.titles.filter(t => t.name.toUpperCase().startsWith(query)); renderSelectTitleDropdown(suggestions); if (!selectTitleDropdown.classList.contains('hidden') && suggestions.length === 0) { setTimeout(() => toggleSelectTitleDropdown(false), 1500); } else if (suggestions.length > 0) { selectTitleDropdown.classList.remove('hidden'); } });
         
-        // --- NUEVO (para iniciar sesión al presionar Enter en subtítulo) ---
         sessionSubtitleInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -1156,11 +1163,19 @@
             }
         });
         
-                notepadTextarea.addEventListener('input', () => {
+        // Listeners para el nuevo modal de entrada manual
+        manualEntryOverlay.addEventListener('click', (e) => { 
+            if (e.target === manualEntryOverlay) toggleManualEntryForm(false); 
+        });
+        document.getElementById('close-manual-entry-btn').addEventListener('click', () => toggleManualEntryForm(false));
+        
+        closeNotepadBtn.addEventListener('click', closeNotepad); 
+        
+        notepadTextarea.addEventListener('input', () => {
              localStorage.setItem('flowtimeNotepadContent', notepadTextarea.value);
         });
 
-        // --- FUNCIONES DE LA NUBE (SINCRONIZACIÓN INTELIGENTE) ---
+        // --- FUNCIONES DE LA NUBE (CON MODO SOBREESCRIBIR) ---
         
         function showCloudStatus(msg, type = 'info') {
             cloudStatusMsg.textContent = msg;
@@ -1171,6 +1186,7 @@
         async function cloudSync(action) {
             const apiKey = localStorage.getItem('flowtime_apiKey');
             const binId = localStorage.getItem('flowtime_binId');
+            const forceOverwrite = document.getElementById('cloud-force-overwrite').checked;
 
             if (!apiKey || !binId) {
                 alert("Primero configura tus llaves de JSONBin (Click en 'Configurar')");
@@ -1183,88 +1199,140 @@
             try {
                 showCloudStatus(action === 'upload' ? 'Subiendo...' : 'Bajando...', 'info');
                 
-                // 1. SIEMPRE descargamos primero para no perder datos de la nube
-                const response = await fetch(url, {
-                    method: 'GET',
-                    headers: { 'X-Master-Key': apiKey }
-                });
+                // Lógica de Upload (Subir)
+                if (action === 'upload') {
+                    let finalDataToSave;
 
-                if (!response.ok) throw new Error('Error al conectar con la nube');
-
-                const result = await response.json();
-                const cloudData = result.record;
-                
-                // LÓGICA DE FUSIÓN (MERGE)
-                // Combinamos historial local + historial nube
-                const localHistory = sessionHistory || [];
-                const cloudHist = cloudData.sessionHistory || [];
-                
-                // Usamos un Map para eliminar duplicados basados en la hora de inicio
-                const mergedMap = new Map();
-                
-                // Primero llenamos con la nube
-                cloudHist.forEach(s => mergedMap.set(s.startTime, s));
-                
-                // Luego llenamos/sobreescribimos con local
-                localHistory.forEach(s => mergedMap.set(s.startTime, s));
-                
-                // Convertimos de vuelta a array y ordenamos
-                const mergedHistory = Array.from(mergedMap.values()).sort((a, b) => new Date(b.endTime) - new Date(a.endTime));
-
-                // Fusionar Grupos (Evitar duplicados de nombre)
-                const localGroups = titleGroups || [];
-                const cloudGroups = cloudData.titleGroups || [];
-                const mergedGroups = [...localGroups];
-                
-                cloudGroups.forEach(cG => {
-                    const existingG = mergedGroups.find(lG => lG.name === cG.name);
-                    if (!existingG) {
-                        mergedGroups.push(cG); 
+                    if (forceOverwrite) {
+                        // MODO SOBREESCRIBIR: Ignoramos lo que hay en la nube.
+                        // Lo que hay en el dispositivo es la verdad absoluta.
+                        finalDataToSave = {
+                            sessionHistory, titleGroups, attendanceData, isAttendanceLocked, 
+                            timestamp: new Date().toISOString()
+                        };
+                        // Desmarcamos la casilla automáticamente por seguridad
+                        document.getElementById('cloud-force-overwrite').checked = false;
                     } else {
-                        // Si el grupo existe, fusionamos sus títulos
-                        cG.titles.forEach(cT => {
-                            if (!existingG.titles.some(lT => lT.name === cT.name)) {
-                                existingG.titles.push(cT);
+                        // MODO FUSIÓN (DEFAULT): Descargamos primero para no perder datos.
+                        const getResponse = await fetch(url, {
+                            method: 'GET',
+                            headers: { 'X-Master-Key': apiKey }
+                        });
+                        if (!getResponse.ok) throw new Error('Error al leer nube para fusión');
+                        
+                        const result = await getResponse.json();
+                        const cloudData = result.record;
+
+                        // Fusionar Historial
+                        const localHistory = sessionHistory || [];
+                        const cloudHist = cloudData.sessionHistory || [];
+                        const mergedMap = new Map();
+                        cloudHist.forEach(s => mergedMap.set(s.startTime, s));
+                        localHistory.forEach(s => mergedMap.set(s.startTime, s));
+                        const mergedHistory = Array.from(mergedMap.values()).sort((a, b) => new Date(b.endTime) - new Date(a.endTime));
+
+                        // Fusionar Grupos
+                        const localGroups = titleGroups || [];
+                        const cloudGroups = cloudData.titleGroups || [];
+                        const mergedGroups = [...localGroups];
+                        cloudGroups.forEach(cG => {
+                            const existingG = mergedGroups.find(lG => lG.name === cG.name);
+                            if (!existingG) {
+                                mergedGroups.push(cG);
+                            } else {
+                                cG.titles.forEach(cT => {
+                                    if (!existingG.titles.some(lT => lT.name === cT.name)) {
+                                        existingG.titles.push(cT);
+                                    }
+                                });
                             }
                         });
+
+                        // Fusionar Asistencia
+                        const mergedAttendance = { ...cloudData.attendanceData, ...attendanceData };
+
+                        finalDataToSave = {
+                            sessionHistory: mergedHistory,
+                            titleGroups: mergedGroups,
+                            attendanceData: mergedAttendance,
+                            isAttendanceLocked: isAttendanceLocked,
+                            timestamp: new Date().toISOString()
+                        };
+                        
+                        // Actualizamos también la vista local con la fusión
+                        sessionHistory = mergedHistory;
+                        titleGroups = mergedGroups;
+                        attendanceData = mergedAttendance;
+                        saveData();
+                        renderHistory();
                     }
-                });
 
-                // ACTUALIZAMOS LAS VARIABLES EN MEMORIA CON LA FUSIÓN
-                sessionHistory = mergedHistory;
-                titleGroups = mergedGroups;
-                attendanceData = { ...cloudData.attendanceData, ...attendanceData }; 
-
-                if (action === 'upload') {
-                    // SUBIR LA VERSIÓN FUSIONADA
-                    const dataToSave = {
-                        sessionHistory, titleGroups, attendanceData, isAttendanceLocked, 
-                        timestamp: new Date().toISOString()
-                    };
-                    
+                    // ENVIAR A LA NUBE
                     const uploadResponse = await fetch(url, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-Master-Key': apiKey
                         },
-                        body: JSON.stringify(dataToSave)
+                        body: JSON.stringify(finalDataToSave)
                     });
 
                     if (uploadResponse.ok) {
-                        saveData(); // Guardar también en local
-                        renderHistory();
-                        showCloudStatus('¡Sincronizado y Subido!', 'success');
+                        showCloudStatus(forceOverwrite ? '¡Nube sobreescrita!' : '¡Sincronizado y Subido!', 'success');
                     } else {
                         throw new Error('Error al subir');
                     }
 
                 } else {
-                    // SOLO BAJAR (Pero guardamos la fusión)
-                    saveData(); 
-                    renderHistory();
-                    updateSelectedGroupDisplay();
-                    showCloudStatus('¡Datos fusionados y actualizados!', 'success');
+                    // Lógica de Download (Bajar) - Siempre fusiona para seguridad local
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: { 'X-Master-Key': apiKey }
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        const data = result.record;
+                        
+                        if (data.sessionHistory) {
+                            // Fusionamos lo que bajamos con lo que tenemos (por si acaso)
+                            const localHistory = sessionHistory || [];
+                            const cloudHist = data.sessionHistory || [];
+                            const mergedMap = new Map();
+                            localHistory.forEach(s => mergedMap.set(s.startTime, s));
+                            cloudHist.forEach(s => mergedMap.set(s.startTime, s));
+                            sessionHistory = Array.from(mergedMap.values()).sort((a, b) => new Date(b.endTime) - new Date(a.endTime));
+
+                            // Grupos
+                            const localGroups = titleGroups || [];
+                            const cloudGroups = data.titleGroups || [];
+                            // Aquí confiamos más en la nube al bajar, pero mantenemos locales únicos si los hubiera
+                            // (Simplificado: Reemplazamos grupos con la fusión inteligente de arriba si quisieramos, 
+                            // pero al bajar solemos querer "lo que hay en la nube").
+                            // Para ser consistentes, hacemos un merge simple de grupos también:
+                            const mergedGroups = [...localGroups];
+                            cloudGroups.forEach(cG => {
+                                const existingG = mergedGroups.find(lG => lG.name === cG.name);
+                                if (!existingG) mergedGroups.push(cG);
+                                else {
+                                    cG.titles.forEach(cT => {
+                                        if (!existingG.titles.some(lT => lT.name === cT.name)) existingG.titles.push(cT);
+                                    });
+                                }
+                            });
+                            titleGroups = mergedGroups;
+
+                            attendanceData = { ...attendanceData, ...(data.attendanceData || {}) };
+                            isAttendanceLocked = data.isAttendanceLocked || false;
+                            
+                            saveData(); 
+                            renderHistory();
+                            updateSelectedGroupDisplay(); 
+                            showCloudStatus('¡Datos bajados y fusionados!', 'success');
+                        }
+                    } else {
+                        throw new Error('Error al bajar');
+                    }
                 }
 
             } catch (error) {
@@ -1357,6 +1425,6 @@
                 if (event.code === 'Enter') confirmDelete();
             }
         });
-
+    </script>
 </body>
 </html>
