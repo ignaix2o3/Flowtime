@@ -1425,6 +1425,53 @@
                 if (event.code === 'Enter') confirmDelete();
             }
         });
+
+        // --- GESTOS TÁCTILES (SWIPE Y 2 DEDOS) ---
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+
+            // GESTO: Tocar con 2 dedos ABRE o CIERRA Estadísticas
+            if (e.touches.length === 2) {
+                // Si el historial está abierto, lo cerramos
+                if (!historySidebar.classList.contains('translate-x-full')) {
+                    toggleHistorySidebar(false);
+                }
+                
+                // LÓGICA DE INTERRUPTOR PARA LA GRÁFICA
+                if (statsOverlay.classList.contains('hidden')) {
+                    toggleStatsModal(true); // Si está oculta, la abre
+                } else {
+                    toggleStatsModal(false); // Si está visible, la cierra
+                }
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', (e) => {
+            let touchEndX = e.changedTouches[0].screenX;
+            let touchEndY = e.changedTouches[0].screenY;
+            
+            handleSwipeGesture(touchStartX, touchStartY, touchEndX, touchEndY);
+        });
+
+        function handleSwipeGesture(startX, startY, endX, endY) {
+            const xDiff = startX - endX;
+            const yDiff = Math.abs(startY - endY);
+
+            // Umbral: Movimiento horizontal > 50px y vertical < 100px (para no confundir con scroll)
+            if (Math.abs(xDiff) > 50 && yDiff < 100) {
+                if (xDiff > 0) {
+                    // Deslizó hacia la IZQUIERDA (Left) -> ABRIR Historial
+                    toggleHistorySidebar(true);
+                } else {
+                    // Deslizó hacia la DERECHA (Right) -> CERRAR Historial
+                    toggleHistorySidebar(false);
+                }
+            }
+        }
     </script>
 </body>
 </html>
