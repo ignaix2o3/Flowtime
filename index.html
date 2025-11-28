@@ -560,7 +560,40 @@
             manualFinishBtn.classList.add('opacity-50', 'cursor-not-allowed'); 
             manualFinishBtn.title = 'Se activará si entras en tiempo extra'; 
         }
+                // --- AGREGA ESTA FUNCIÓN QUE FALTA ---
+        function saveSessionToHistory() {
+            const endTime = new Date();
+            
+            // Calculamos el tiempo. 
+            // Nota: Como la función tick() actual cuenta todo en 'workTimeElapsed',
+            // asignaremos el total al tipo de tarea (Teoría o Práctica) que esté activo al finalizar.
+            const wPrimary = isSessionPrimary ? workTimeElapsed : 0;
+            const wSecondary = !isSessionPrimary ? workTimeElapsed : 0;
+
+            const sessionData = {
+                title: sessionTitle,
+                group: sessionGroup,
+                subtitle: sessionSubtitle, 
+                workTimePrimary: wPrimary,
+                workTimeSecondary: wSecondary,
+                startTime: sessionStartTime.toISOString(),
+                endTime: endTime.toISOString()
+            };
+
+            // Añadir al historial y guardar
+            sessionHistory.push(sessionData);
+            sessionHistory.sort((a, b) => new Date(b.endTime) - new Date(a.endTime)); // Ordenar por fecha
+            
+            saveData();       // Guardar en LocalStorage
+            renderHistory();  // Actualizar la lista lateral
+            
+            // Si la ventana de estadísticas está abierta, actualizarla también
+            if(!statsOverlay.classList.contains('hidden')){
+                renderStatsChart();
+            }
+        }
         
+
         let wakeLock = null;
         async function startSession(){
             if ('wakeLock' in navigator) {
