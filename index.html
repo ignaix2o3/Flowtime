@@ -30,6 +30,21 @@
         #tutorial-spotlight { position: absolute; border-radius: 8px; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7); transition: all 0.4s ease-in-out; pointer-events: none; }
         #tutorial-modal { transition: all 0.4s ease-in-out; transform: translateY(10px); opacity: 0; }
         #tutorial-modal.visible { transform: translateY(0); opacity: 1; }
+                /* Estilo para cuando el gráfico se agranda */
+        .chart-fullscreen {
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            width: 100vh !important;  /* Intercambiamos ancho/alto */
+            height: 100vw !important; 
+            transform: translate(-50%, -50%) rotate(90deg) !important;
+            background-color: #1f2937; /* Color de fondo gris oscuro */
+            z-index: 99999 !important;
+            padding: 20px !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+        }
+
     </style>
     <link rel="manifest" href="manifest.json">
 </head>
@@ -253,16 +268,23 @@
         </div>
         
         <div id="session-screen" class="hidden h-full w-full grid grid-cols-1 grid-rows-[auto_1fr_auto] gap-4 justify-items-center">
-            <div id="work-monitor" class="row-start-1 p-4 md:p-6 bg-gray-800 rounded-2xl flex items-center gap-4">
-                <div class="flex items-baseline gap-2 whitespace-nowrap">
-                    <h2 class="text-sm md:text-base font-semibold text-gray-400">TIEMPO DE TRABAJO:</h2>
-                    <span id="work-session-title" class="text-base font-bold text-sky-400"></span>
-                    <span id="work-time-goal" class="text-lg font-mono text-sky-400">00:00</span>
+            <div id="work-monitor" class="row-start-1 w-full max-w-3xl p-5 bg-gray-800 rounded-2xl flex flex-col gap-3 shadow-lg border border-gray-700/50">
+                <div class="flex flex-col md:flex-row items-center justify-between gap-2 text-center md:text-left">
+                    <div class="flex flex-col">
+                        <span class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Tiempo de Trabajo</span>
+                        <span id="work-session-title" class="text-xl md:text-2xl font-bold text-sky-400 leading-tight break-words"></span>
+                    </div>
+                    <span id="work-time-goal" class="text-3xl font-mono text-white bg-gray-900/50 px-4 py-1 rounded-lg tracking-wider">00:00</span>
                 </div>
-                <div class="flex-grow bg-gray-700 rounded-full h-4">
-                    <div id="work-progress-bar" class="bg-sky-500 h-4 rounded-full transition-all duration-500" style="width: 0%"></div>
+                
+                <div class="w-full flex items-center gap-3 mt-1">
+                    <div class="flex-grow bg-gray-900 rounded-full h-5 overflow-hidden shadow-inner border border-gray-700">
+                        <div id="work-progress-bar" class="bg-gradient-to-r from-sky-600 to-sky-400 h-full rounded-full transition-all duration-500 relative" style="width: 0%">
+                             <div class="absolute top-0 left-0 w-full h-[40%] bg-white/20"></div>
+                        </div>
+                    </div>
+                    <span id="work-progress-percentage" class="text-sm font-bold font-mono text-gray-400 min-w-[3.5rem] text-right">0%</span>
                 </div>
-                <span id="work-progress-percentage" class="text-base font-mono text-gray-400 w-12 text-right">0%</span>
             </div>
             
             <div id="rest-timer" class="row-start-2 p-6 flex flex-col items-center justify-center gap-6 justify-self-center">
@@ -842,7 +864,28 @@
         function updateTitleColorButton(){const colorBtn=document.getElementById('title-color-btn');const colorSwatch=document.getElementById('title-color-swatch');const titleName=sessionTitleInput.value;const titleObj=titleName?findTitleObject(titleName,currentSelectedGroup):null;if(titleObj){colorBtn.classList.remove('hidden');colorSwatch.style.backgroundColor=titleObj.color;colorSwatch.style.borderColor='#6b7280';colorBtn.style.cursor='pointer';colorBtn.disabled=false}else{colorBtn.classList.remove('hidden');colorSwatch.style.backgroundColor='transparent';colorSwatch.style.borderColor='#4b5563';colorBtn.style.cursor='not-allowed';colorBtn.disabled=true}}
         function updateSelectedGroupDisplay(){const abbrDisplay=document.getElementById('selected-group-abbr');if(abbrDisplay){abbrDisplay.textContent=getGroupAbbreviation(currentSelectedGroup);abbrDisplay.title=currentSelectedGroup}}
         function updateEstimatedFinishTime(){const finishTimeElement=document.getElementById('estimated-finish-time');const workHours=parseInt(workHoursInput.value)||0;const workMinutes=parseInt(workMinutesInput.value)||0;const workSeconds=parseInt(workSecondsInput.value)||0;const restHours=parseInt(restHoursInput.value)||0;const restMinutes=parseInt(restMinutesInput.value)||0;const restSeconds=parseInt(restSecondsInput.value)||0;const totalDurationSeconds=(workHours*3600)+(workMinutes*60)+workSeconds+(restHours*3600)+(restMinutes*60)+restSeconds;if(totalDurationSeconds<=0){finishTimeElement.innerHTML='&nbsp;';return}const now=new Date();const finishTime=new Date(now.getTime()+totalDurationSeconds*1000);const formattedFinishTime=finishTime.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});finishTimeElement.textContent=`Finaliza aprox. a las ${formattedFinishTime} h.`}
-        function toggleStatsModal(show){const isVisible=!statsOverlay.classList.contains('hidden');const shouldShow=show===undefined?!isVisible:show;if(shouldShow){statsOverlay.classList.remove('hidden');statsOverlay.classList.add('flex');populateGroupFilter();populateTitleFilter();renderStatsChart();updateStatsColorButton()}else{statsOverlay.classList.add('hidden');statsOverlay.classList.remove('flex')}}
+                function toggleStatsModal(show) {
+            const isVisible = !statsOverlay.classList.contains('hidden');
+            const shouldShow = show === undefined ? !isVisible : show;
+            
+            if (shouldShow) {
+                statsOverlay.classList.remove('hidden');
+                statsOverlay.classList.add('flex');
+                
+                populateGroupFilter();
+                populateTitleFilter();
+                renderStatsChart();
+                updateStatsColorButton();
+            } else {
+                statsOverlay.classList.add('hidden');
+                statsOverlay.classList.remove('flex');
+                
+                // Asegurarnos de que el gráfico no se quede grande si cerramos la ventana
+                const chartContainer = document.getElementById('stats-chart').parentElement;
+                chartContainer.classList.remove('chart-fullscreen');
+            }
+        }
+
         function populateGroupFilter(){const lastSelected=statsGroupFilter.value||'ESTUDIOS';statsGroupFilter.innerHTML='';const specialOrder=['ESTUDIOS','SIN GRUPO'];const regularGroups=titleGroups.map(g=>g.name).filter(name=>!specialOrder.includes(name)).sort((a,b)=>a.localeCompare(b));const sortedGroupNames=['ESTUDIOS',...regularGroups,'SIN GRUPO'];sortedGroupNames.forEach(groupName=>{if(titleGroups.some(g=>g.name===groupName)){const option=document.createElement('option');option.value=groupName;option.textContent=getGroupAbbreviation(groupName);option.title=groupName;statsGroupFilter.appendChild(option)}});const allGroupsOption=document.createElement('option');allGroupsOption.value='TODOS';allGroupsOption.textContent=getGroupAbbreviation('TODOS');allGroupsOption.title='TODOS LOS GRUPOS';statsGroupFilter.appendChild(allGroupsOption);statsGroupFilter.value=lastSelected}
         function populateTitleFilter(){const selectedGroup=statsGroupFilter.value;const groupAbbr=getGroupAbbreviation(selectedGroup);statsTitleFilter.innerHTML=`<option value="TODOS">TODOS (${groupAbbr})</option>`;let titlesToShow=[];if(selectedGroup==='TODOS'){titlesToShow=[...new Set(titleGroups.flatMap(g=>g.titles.map(t=>t.name)))]}else{const group=titleGroups.find(g=>g.name===selectedGroup);if(group)titlesToShow=group.titles.map(t=>t.name)}titlesToShow.sort().forEach(title=>{const option=document.createElement('option');option.value=title;option.textContent=title;statsTitleFilter.appendChild(option)})}
         function updateStatsColorButton(){const colorBtn=document.getElementById('stats-title-color-btn');const colorSwatch=document.getElementById('stats-title-color-swatch');const selectedTitleName=statsTitleFilter.value;if(selectedTitleName==='TODOS'){colorBtn.classList.add('hidden');return}let groupForColor=statsGroupFilter.value;if(groupForColor==='TODOS'){const found=findTitleAndGroup(selectedTitleName);if(found)groupForColor=found.group}const titleObj=findTitleObject(selectedTitleName,groupForColor);if(titleObj){colorBtn.classList.remove('hidden');colorSwatch.style.backgroundColor=titleObj.color}else{colorBtn.classList.add('hidden')}}
@@ -852,12 +895,11 @@
         function handleCircleClick(event,dayKey){event.preventDefault();if(isAttendanceLocked)return;const data=attendanceData[dayKey];if(event.altKey){if(event.type==='contextmenu'||event.button===2){data.d=Math.max(1,data.d-1)}else{data.d=Math.min(10,data.d+1)}if(data.f>data.d)data.f=data.d}else{data.f++;if(data.f>data.d){data.f=0}}saveData();renderAttendanceCircles()}
         function toggleAttendanceLock(){isAttendanceLocked=!isAttendanceLocked;saveData();updateAttendanceLockIcon()}
         function updateAttendanceLockIcon(){if(isAttendanceLocked){attendanceLockBtn.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>`;attendanceLockBtn.title="Desbloquear edición";attendanceLockBtn.classList.add('text-sky-400')}else{attendanceLockBtn.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>`;attendanceLockBtn.title="Bloquear edición";attendanceLockBtn.classList.remove('text-sky-400')}}
-        function renderStatsChart() {
+                function renderStatsChart() {
             renderAttendanceCircles();
             const selectedGroup = statsGroupFilter.value;
             const selectedTitle = statsTitleFilter.value;
         
-            // Esta variable la necesitamos en el callback del tooltip
             const weekStart = new Date(currentDateForStats);
             weekStart.setDate(weekStart.getDate() - (weekStart.getDay() === 0 ? 6 : weekStart.getDay() - 1));
             weekStart.setHours(0, 0, 0, 0);
@@ -880,18 +922,25 @@
             const historyForSelectedGroup = getFilteredHistory(selectedGroup, 'TODOS');
             let totalWeeklySeconds = 0;
         
-            // Esta variable también es clave para el callback
             const currentViewHistory = getFilteredHistory(selectedGroup, selectedTitle);
             currentViewHistory.forEach(s => totalWeeklySeconds += (s.workTimePrimary + s.workTimeSecondary));
             weeklyTotalTime.textContent = `Total: ${formatMinutesToHHMM(totalWeeklySeconds / 60)} Hrs.`;
             
             let datasets;
             
-            // --- MODIFICACIÓN AQUÍ ---
-            // Se ha actualizado el callback `afterBody` para la nueva lógica de desglose
             let chartOptions = {
                 responsive: true,
                 maintainAspectRatio: false,
+                // --- NUEVO: EVENTO DE CLIC ---
+                onClick: (e, elements, chart) => {
+                    // Si elements tiene datos, es que tocaste una barra -> No hacemos nada (Chart.js muestra tooltip)
+                    if (elements.length > 0) return;
+
+                    // Si NO tocaste barra (fondo), expandimos/contraemos
+                    const container = document.getElementById('stats-chart').parentElement;
+                    container.classList.toggle('chart-fullscreen');
+                },
+                // -----------------------------
                 scales: {
                     y: {
                         beginAtZero: true,
@@ -909,22 +958,16 @@
                     tooltip: {
                         callbacks: {
                             label: (c) => `${c.dataset.label || ''}: ${formatMinutesToHHMM(c.parsed.y)}`,
-                            
-                            // --- LÓGICA DE SUBTÍTULOS REFINADA ---
                             afterBody: function(tooltipItems) {
-                                // Map para almacenar: { "Nombre Subtítulo" => totalSegundos }
                                 const subtitleTimes = new Map();
-                                
                                 const dayIndex = tooltipItems[0].dataIndex;
                                 const dayDate = new Date(weekStart);
                                 dayDate.setDate(dayDate.getDate() + dayIndex);
-                                const dayKey = dayDate.toLocaleDateString('sv-SE'); // ej: "2025-11-05"
+                                const dayKey = dayDate.toLocaleDateString('sv-SE');
 
                                 tooltipItems.forEach(item => {
                                     let taskTitle;
                                     let isPrimary;
-
-                                    // 1. Identificar qué representa este segmento de barra
                                     if (selectedTitle === 'TODOS') {
                                         const label = item.dataset.label;
                                         if (label.includes(' (Teoría)')) {
@@ -933,24 +976,18 @@
                                         } else if (label.includes(' (Práctica)')) {
                                             taskTitle = label.replace(' (Práctica)', '');
                                             isPrimary = false;
-                                        } else {
-                                            return; // No es un segmento de datos válido
-                                        }
+                                        } else return;
                                     } else {
                                         taskTitle = selectedTitle;
                                         const label = item.dataset.label;
                                         if (label === 'Teoría') isPrimary = true;
                                         else if (label === 'Práctica') isPrimary = false;
-                                        else return; // No es un segmento de datos (ej. "Potencial")
+                                        else return;
                                     }
-
-                                    // 2. Filtrar historial para encontrar sesiones y agrupar por subtítulo
                                     currentViewHistory.forEach(session => {
                                         const sessionDateKey = (new Date(session.endTime)).toLocaleDateString('sv-SE');
                                         const sessionIsPrimary = session.workTimePrimary > 0;
                                         const sessionDuration = session.workTimePrimary + session.workTimeSecondary;
-
-                                        // Comprobar si coincide el día, título y tipo (Teoría/Práctica)
                                         if (session.title.toUpperCase() === taskTitle.toUpperCase() &&
                                             sessionDateKey === dayKey &&
                                             sessionIsPrimary === isPrimary &&
@@ -963,49 +1000,22 @@
                                     });
                                 });
 
-                                // 3. Formatear la salida según las nuevas reglas
                                 if (subtitleTimes.size === 0) return [];
-
-                                const subtitleArray = Array.from(subtitleTimes.entries())
-                                    .filter(([subtitle, time]) => time > 0); // Filtrar entradas de 0 tiempo
-
+                                const subtitleArray = Array.from(subtitleTimes.entries()).filter(([_, t]) => t > 0);
                                 if (subtitleArray.length === 0) return [];
-
-                                // --- LÓGICA DE SCENARIOS REFINADA ---
-
-                                // Scenario 1: Si la única entrada es "(Sin subtítulo)", no mostrar desglose.
-                                if (subtitleArray.length === 1 && subtitleArray[0][0] === '(Sin subtítulo)') {
-                                    return [];
-                                }
-
-                                // Scenario 2: Si hay UNA sola entrada Y TIENE nombre, mostrar solo el nombre.
-                                if (subtitleArray.length === 1 && subtitleArray[0][0] !== '(Sin subtítulo)') {
-                                    const subtitleName = subtitleArray[0][0];
-                                    const prefix = 'Desglose:';
-                                    const outputLines = [`  - ${subtitleName}`]; // Sin tiempo
-                                    return ["", prefix].concat(outputLines);
-                                }
-
-                                // Scenario 3: Si hay MÁS de una entrada (ej. "Guía 3" y "Certamen 2", o "Guía 3" y "(Sin subtítulo)"),
-                                // mostrar el desglose completo con tiempos.
-                                if (subtitleArray.length > 1) {
-                                    subtitleArray.sort((a, b) => b[1] - a[1]); // Ordenar por tiempo
-                                    const prefix = 'Desglose:';
-                                    const outputLines = subtitleArray.map(([subtitle, time]) => {
-                                        const formattedTime = formatHistoryTime(time);
-                                        return `  - ${subtitle} (${formattedTime})`;
-                                    });
-                                    return ["", prefix].concat(outputLines);
-                                }
+                                if (subtitleArray.length === 1 && subtitleArray[0][0] === '(Sin subtítulo)') return [];
                                 
-                                return []; // Fallback por si acaso
+                                const prefix = 'Desglose:';
+                                if (subtitleArray.length === 1) return ["", prefix, `  - ${subtitleArray[0][0]}`];
+
+                                subtitleArray.sort((a, b) => b[1] - a[1]);
+                                const outputLines = subtitleArray.map(([sub, time]) => `  - ${sub} (${formatHistoryTime(time)})`);
+                                return ["", prefix].concat(outputLines);
                             }
-                            // --- FIN DE LÓGICA ACTUALIZADA ---
                         }
                     }
                 }
             };
-            // --- FIN DE MODIFICACIÓN ---
 
             const historyForMaxScale = getFilteredHistory(selectedGroup, 'TODOS');
             const maxDailyTotals = Array(7).fill(0);
@@ -1054,7 +1064,6 @@
                 });
                 chartOptions.scales.x.stacked = true;
                 chartOptions.scales.y.stacked = true;
-                // Sobrescribimos 'label' solo para este modo, pero 'afterBody' se mantiene
                 chartOptions.plugins.tooltip.callbacks.label = (c) => `${c.dataset.label}: ${formatMinutesToHHMM(c.raw)}`
             } else {
                 let barColorHex = defaultColor.hex;
@@ -1099,11 +1108,11 @@
                 }];
                 chartOptions.scales.x.stacked = true;
                 chartOptions.scales.y.stacked = true;
-                // Aquí usamos el 'label' callback que definimos al inicio
             }
             if (statsChart) statsChart.destroy();
             statsChart = new Chart(statsChartCanvas, { type: 'bar', data: { labels, datasets }, options: chartOptions })
         }
+
         function setupMouseWheelListeners(){document.querySelectorAll('input[type="number"]').forEach(input=>{if(input.id.includes('seconds'))return;const updateValue=(e)=>{e.preventDefault();let val=parseInt(input.value)||0;if(input.id.includes('minutes')){if(e.ctrlKey){val+=e.deltaY<0?1:-1}else{const remainder=val%5;if(e.deltaY<0){if(remainder===0){val+=5}else{val+=(5-remainder)}}else{if(remainder===0){val-=5}else{val-=remainder}}}}else{val+=e.deltaY<0?1:-1}if(input.id.includes('hours'))val=Math.max(0,Math.min(24,val));else val=Math.max(0,Math.min(59,val));input.value=val;updateEstimatedFinishTime()};input.addEventListener('wheel',updateValue)})}
         
         async function initializeApp(){
@@ -1467,8 +1476,8 @@
             touchStartX = e.changedTouches[0].screenX;
             touchStartY = e.changedTouches[0].screenY;
 
-            // GESTO: Tocar con 2 dedos ABRE o CIERRA Estadísticas
-            if (e.touches.length === 2) {
+            // GESTO: Tocar con 3 dedos ABRE o CIERRA Estadísticas
+            if (e.touches.length === 3) {
                 // Si el historial está abierto, lo cerramos
                 if (!historySidebar.classList.contains('translate-x-full')) {
                     toggleHistorySidebar(false);
